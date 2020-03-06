@@ -1,0 +1,239 @@
+---
+title: "1DataCollection"
+author: "Guirong Fu"
+date: "March 3, 2020"
+output: html_document
+---
+
+## Initialization
+
+```{r init, include=F}
+#rm(list=ls())
+library(dplyr)
+library(rtweet,lib.loc="./lib/") # you can change to your lib location
+
+api_key <- "..."
+api_secret_key <- "..."
+
+token <- create_token(
+  app = "...",
+  consumer_key = api_key,
+  consumer_secret = api_secret_key)
+```
+
+## Functions
+
+
+```{r functions}
+crabbingGlobal<-function(q, init_id, fdate, end_datetime){
+  max_id = init_id
+  fname<-paste("./data/Tweet",fdate,"en.RData",sep="")
+  end_date_num<-as.numeric(as.POSIXlt.character(end_datetime,tz="GMT",format="%Y-%m-%d %H"))
+  limit = rate_limit(token = token, "search/tweets")
+  n = (limit$remaining-5)*100
+  if(n<20){
+    print("rate limit reached, waiting")
+    Sys.sleep(15*60)
+    n = 175000
+  }
+  
+  en_tweets <- search_tweets(q=q, lang="en",n=n, max_id=max_id, token=token)
+  arrange(en_tweets,created_at)%>% select(user_id, status_id, created_at, is_retweet, hashtags, lang, retweet_status_id, retweet_user_id, location)->tweets
+  save(tweets,file=fname)
+    
+  last_time = tweets$created_at[1]
+  max_id = tweets$status_id[1]
+  print(paste("Backing search to",last_time))
+  
+  while(as.numeric(last_time) > end_date_num){
+    limit = rate_limit(token = token, "search/tweets")
+    n = (limit$remaining-5)*100
+    if(n<20){
+      print("rate limit reached, waiting")
+      Sys.sleep(15*60)
+      n = 175000
+    }
+  
+    en_tweets <- search_tweets(q=q, lang="en",n=n, max_id=max_id, token=token)
+    arrange(en_tweets,created_at)%>% select(user_id, status_id, created_at, is_retweet, hashtags, lang, retweet_status_id, retweet_user_id, location)->shorted
+    
+    last_time = shorted$created_at[1]
+    max_id = shorted$status_id[1]
+    print(paste("Backing search to",last_time))
+    
+    tweets<-rbind(shorted, tweets)
+    save(tweets,file=fname)
+  }
+  
+  keep_sign<-as.numeric(tweets$created_at) > end_date_num
+  tweets<-tweets[keep_sign,]
+  save(tweets,file=fname)
+  
+  print("Successful crabbing for global!")
+}
+
+crabbingData<-function(n, queries, languages,since_ids,init_date, end_date){
+  last_ids = rep(NA,n)
+  init_date_num<-as.numeric(as.POSIXlt.character(init_date,tz="GMT",format="%m%d"))
+  
+  
+  for(i in 1:n){
+    q = queries[i]
+    l = languages[i]
+    sid= since_ids[i]
+    
+    print(paste("Searching for",l))
+    fname = paste("./data/",l,"/Tweet",init_date,l,".RData",sep="")
+    
+    lts = rate_limit(token,"search/tweets")
+    limit_n = (lts$remaining - 10)*100
+    print(paste("Left searching times: ",limit_n))
+    if(limit_n<500){
+      print("rate limit reached, waiting")
+      Sys.sleep(15*60)
+      limit_n = 17000
+    }
+    
+    
+    tweets <- search_tweets(q=q, lang = l,n=limit_n, since_id=sid,until=end_date, token=token)
+    arrange(tweets,created_at)%>% select(user_id, status_id, created_at, is_retweet, hashtags, lang, retweet_status_id, retweet_user_id,location)->tweets
+    
+    actual_time = tweets$created_at[1]
+    cid_char = tweets$status_id[1]
+    n_cumu=nrow(tweets)
+    
+    # search for more tweets if the current earlist time is less than the predefined time
+    while(as.numeric(actual_time)>init_date_num){
+      lts = rate_limit(token,"search/tweets")
+      if(lts$remaining <25){
+        print("rate limit reached, waiting")
+        Sys.sleep(15*60)
+        print("Searching for more tweets...")
+      }
+      
+      limit_n=2000
+      more_tweets<-search_tweets(q=q, lang = l,n=limit_n, max_id=cid_char, token=token)
+      arrange(more_tweets,created_at) %>% select(user_id, status_id, created_at, is_retweet, hashtags, lang, retweet_status_id, retweet_user_id, location)->more_tweets
+      
+      cid_char = more_tweets$status_id[1]
+      actual_time = more_tweets$created_at[1]
+      
+      tweets<-rbind(more_tweets, tweets)
+      save(tweets,file=fname)
+      
+      n_cumu<-nrow(tweets)
+      print(paste("Cumulative search numbers:",n_cumu))
+    }
+    last_ids[i]<-tweets$status_id[length(tweets$status_id)]
+    keep_sign<-as.numeric(tweets$created_at)>init_date_num
+    tweets<-tweets[keep_sign,]
+    save(tweets,file=fname)
+  }
+  return(last_ids)
+}
+```
+
+## Usage demo
+
+- hi:#कोरोन
+  - Feb-26 1232436628724994048
+  - Feb-27 1232816300700917760
+  - Feb-28 1233179448704290817
+  - Feb-29 1233541459086757888
+  - Mar-01 1233904495769378816 (2020-02-29 23:59)
+  - Mar-02 1234266680504786947
+  
+- ko: #코로나
+  - Feb-26 1232455178244083712
+  - Feb-27 1232817029263941634
+  - Feb-28 1233179639863865344
+  - Feb-29 1233542368542019584
+  - Mar-01 1233903629305729026 (2020-02-29 23:59)
+  - Mar-02 1234267085288509440 (2020-03-01 23:59)
+  
+- ru: #коронавирус
+  - Feb-26 1232454012382801920
+  - Feb-27 1232817488775217152
+  - Feb-28 1233179116855332864
+  - Feb-29 1233541440581623820
+  - Mar-01 1233904267355779074 (2020-02-29 23:59)
+  - Mar-02 1234266802898821122
+  
+  
+- ja: #コロナウイルス
+  - Feb-27 1232817604118474752
+  - Feb-28 1233180005401645058
+  - Feb-29 1233542395540754432
+  - Mar-01 1233904779950080000 (2020-02-29 23:59)
+  - Mar-02 1234267164862844928
+
+- de: (same)
+  - Feb-27 1232817581989531648
+  - Feb-28 1233179939970658305
+  - Feb-29 1233542394093719552
+  - Mar-01 1233904751059853312 (2020-02-29 23:59)
+  - Mar-02 1234267165555150848
+
+  
+- it: (same)
+  - Feb-27 1232817608002588673
+  - Feb-28 1233179982408667138
+  - Feb-29 1233542374464401410
+  - Mar-01 1233904767883186177 (2020-02-29 23:59)
+  - Mar-02 1234267169950752768
+  
+
+
+en:
+- Feb-27 1232817608002588673
+- Feb-28 1233180005401645058
+- Feb-29 1233542374464401410 (2020-02-28 23:59)
+- Mar-01 1233904779950080000
+- Mar-02 1234267169950752768
+
+
+```{r demo-languages}
+# setting up the parameters
+q_en = "#COVID2019 OR #coronavirus OR #COVID_19 OR #corona OR #covid19"
+q_hi = paste(q_en, "OR #????????????")
+q_ko = paste(q_en, "OR #?????????")
+q_ru = paste(q_en, "OR #??????????????????????")
+q_ja = paste(q_en, "OR #?????????????????????")
+
+queries=c(q_hi,q_ko,q_ru,q_ja,q_en,q_en)
+
+languages = c("hi","ko","ru","ja","de","it")
+
+# ids refer to the ealiest ids we want (excluded).
+id_hi = "1233904495769378816"
+id_ko = "1233903629305729026"
+id_ru = "1233904267355779074"
+id_ja = "1233904779950080000"
+id_de = "1233904751059853312"
+id_it = "1233904767883186177"
+ids = c(id_hi,id_ko,id_ru,id_ja,id_de,id_it)
+
+# ids = last_ids
+init_date = "0301"
+end_date = "2020-03-02"
+last_ids = crabbingData(6,queries,languages,ids,init_date,end_date)
+
+
+# if you need to customize the query of language, please refer to the following code. This is an example for 3 languages.
+#qs= c(q_ja,q_en,q_en)
+#ls = c("ja","de","it")
+#is = c(id_ja,id_de,id_it)
+#last_ids = crabbingData(3,qs,ls,is,init_date,end_date)
+
+```
+
+
+
+```{r demoen}
+init_id = "1234267169950752768" # the last known id in 2020-02-12
+end_datetime = "2020-03-01 12"
+q = "#COVID2019 OR #coronavirus OR #COVID_19 OR #corona OR #covid19"
+fdate="0301"
+
+crabbingGlobal(q,init_id,fdate, end_datetime)
+```
