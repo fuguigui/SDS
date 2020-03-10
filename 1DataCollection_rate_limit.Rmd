@@ -34,7 +34,7 @@ crabbingGlobal<-function(q, init_id, fdate, end_datetime){
   if(n<20){
     print("rate limit reached, waiting")
     Sys.sleep(15*60)
-    n = 175000
+    n = 17500
   }
   
   en_tweets <- search_tweets(q=q, lang="en",n=n, max_id=max_id, token=token)
@@ -51,7 +51,7 @@ crabbingGlobal<-function(q, init_id, fdate, end_datetime){
     if(n<20){
       print("rate limit reached, waiting")
       Sys.sleep(15*60)
-      n = 175000
+      n = 17500
     }
   
     en_tweets <- search_tweets(q=q, lang="en",n=n, max_id=max_id, token=token)
@@ -194,7 +194,7 @@ en:
 
 ```{r demo-languages}
 # setting up the parameters
-q_en = "#COVID2019 OR #coronavirus OR #COVID_19 OR #corona OR #covid19"
+q_en = "#COVID2019 OR #coronavirus"
 q_hi = paste(q_en, "OR #????????????")
 q_ko = paste(q_en, "OR #?????????")
 q_ru = paste(q_en, "OR #??????????????????????")
@@ -205,17 +205,17 @@ queries=c(q_hi,q_ko,q_ru,q_ja,q_en,q_en)
 languages = c("hi","ko","ru","ja","de","it")
 
 # ids refer to the ealiest ids we want (excluded).
-id_hi = "1233904495769378816"
-id_ko = "1233903629305729026"
-id_ru = "1233904267355779074"
-id_ja = "1233904779950080000"
-id_de = "1233904751059853312"
-id_it = "1233904767883186177"
+id_hi = "1236441487790837760"
+id_ko = "1236440938903302144"
+id_ru = "1236440826491871233"
+id_ja = "1236441486104735744"
+id_de = "1236441486973165568"
+id_it = "1236441496645140482"
 ids = c(id_hi,id_ko,id_ru,id_ja,id_de,id_it)
 
 # ids = last_ids
-init_date = "0301"
-end_date = "2020-03-02"
+init_date = "0307"
+end_date = "2020-03-08"
 last_ids = crabbingData(6,queries,languages,ids,init_date,end_date)
 
 
@@ -230,10 +230,11 @@ last_ids = crabbingData(6,queries,languages,ids,init_date,end_date)
 
 
 ```{r demoen}
-init_id = "1234267169950752768" # the last known id in 2020-02-12
-end_datetime = "2020-03-01 12"
-q = "#COVID2019 OR #coronavirus OR #COVID_19 OR #corona OR #covid19"
-fdate="0301"
+init_id = "1236441496645140482" # the last known id in 2020-02-12
+end_datetime = "2020-03-07 12"
+q = "#COVID2019 OR #coronavirus"
+fdate="0307"
+
 
 crabbingGlobal(q,init_id,fdate, end_datetime)
 ```

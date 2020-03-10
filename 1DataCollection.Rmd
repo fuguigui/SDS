@@ -154,6 +154,10 @@ crabbingData<-function(n, queries, languages,since_ids,init_date, end_date){
   - Mar-02 1234266680504786947
   - Mar-03 1234626122836475904
   - Mar-04 1234991455065608192
+  - Mar-05 1235354132707291136
+  - Mar-06 1235716442965700608
+  - Mar-07 1236079106858631168
+  - Mar-08 1236441487790837760
   
 - ko: #코로나
   - Feb-26 1232455178244083712
@@ -164,6 +168,10 @@ crabbingData<-function(n, queries, languages,since_ids,init_date, end_date){
   - Mar-02 1234267085288509440 (2020-03-01 23:59)
   - Mar-03 1234629518536495104
   - Mar-04 1234991623794126850
+  - Mar-05 1235354019880550401
+  - Mar-06 1235714687053860864
+  - Mar-07 1236078298989350912
+  - Mar-08 1236440938903302144
   
 - ru: #коронавирус
   - Feb-26 1232454012382801920
@@ -174,6 +182,10 @@ crabbingData<-function(n, queries, languages,since_ids,init_date, end_date){
   - Mar-02 1234266802898821122
   - Mar-03 1234629386395115533
   - Mar-04 1234990709502922753
+  - Mar-05 1235352946013073409
+  - Mar-06 1235711613803651073
+  - Mar-07 1236078939551956992
+  - Mar-08 1236440826491871233
   
   
 - ja: #コロナウイルス
@@ -184,6 +196,10 @@ crabbingData<-function(n, queries, languages,since_ids,init_date, end_date){
   - Mar-02 1234267164862844928
   - Mar-03 1234629551545704448
   - Mar-04 1234991944473858050
+  - Mar-05 1235354323321683968
+  - Mar-06 1235716722113445888
+  - Mar-07 1236079090483986438
+  - Mar-08 1236441486104735744
 
 - de: (same)
   - Feb-27 1232817581989531648
@@ -193,6 +209,10 @@ crabbingData<-function(n, queries, languages,since_ids,init_date, end_date){
   - Mar-02 1234267165555150848
   - Mar-03 1234629554129506306
   - Mar-04 1234991899087273984
+  - Mar-05 1235354310323695623
+  - Mar-06 1235716637069905921
+  - Mar-07 1236079101657731073
+  - Mar-08 1236441486973165568
 
   
 - it: (same)
@@ -203,7 +223,10 @@ crabbingData<-function(n, queries, languages,since_ids,init_date, end_date){
   - Mar-02 1234267169950752768
   - Mar-03 1234629522613403649
   - Mar-04 1234991932373258241
-
+  - Mar-05 1235354330208890880
+  - Mar-06 1235716708763086849
+  - Mar-07 1236079107181510656
+  - Mar-08 1236441496645140482
 
 
 ```{r demo-languages}
@@ -219,33 +242,33 @@ queries=c(q_hi,q_ko,q_ru,q_ja,q_en,q_en)
 languages = c("hi","ko","ru","ja","de","it")
 
 # ids refer to the ealiest ids we want (excluded).
-id_hi = "1234991455065608192"
-id_ko = "1234991623794126850"
-id_ru = "1234990709502922753"
-id_ja = "1234991944473858050"
-id_de = "1234991899087273984"
-id_it = "1234991932373258241"
+id_hi = "1236441487790837760"
+id_ko = "1236440938903302144"
+id_ru = "1236440826491871233"
+id_ja = "1236441486104735744"
+id_de = "1236441486973165568"
+id_it = "1236441496645140482"
 ids = c(id_hi,id_ko,id_ru,id_ja,id_de,id_it)
 
-# ids = last_ids
-init_date = "0304"
-end_date = "2020-03-05"
+ids = last_ids
+init_date = "0307"
+end_date = "2020-03-08"
 last_ids = crabbingData(6,queries,languages,ids,init_date,end_date)
 
 
 # if you need to customize the query of language, please refer to the following code. This is an example for 3 languages.
-qs= c(q_ko, q_ru, q_ja,q_en,q_en)
-ls = c("ko","ru","ja","de","it")
+#qs= c(q_ko, q_ru, q_ja,q_en,q_en)
+#ls = c("ko","ru","ja","de","it")
 #is = c(id_ja,id_de,id_it)
 #ids = last_ids[2:6]
-ids = c(id_ko,id_ru,id_ja,id_de,id_it)
-last_ids = crabbingData(5,qs,ls,ids,init_date,end_date)
+#ids = c(id_ko,id_ru,id_ja,id_de,id_it)
+#last_ids = crabbingData(1,c(q_en),c("de"),c(id_de),init_date,end_date)
 
-tweets <- search_tweets(q=q_ko, lang = "ko",n=500, since_id=id_ko,until=end_date, token=token)
+#tweets <- search_tweets(q=q_ko, lang = "ko",n=500, since_id=id_ko,until=end_date, token=token)
 
-arrange(tweets,created_at)%>% select(user_id, status_id, created_at, is_retweet, hashtags, lang, retweet_status_id, retweet_user_id,location)->tweets
+#arrange(tweets,created_at)%>% select(user_id, status_id, created_at, is_retweet, hashtags, lang, retweet_status_id, retweet_user_id,location)->tweets
     
-actual_time = tweets$created_at[1]
+#actual_time = tweets$created_at[1]
 
 ```
 
@@ -258,15 +281,30 @@ en:
 - Mar-02 1234267169950752768
 - Mar-03 1234629554129506306
 - Mar-04 1234991944473858050
+- Mar-05 1235354330208890880
+- Mar-06 1235716722113445888
+- Mar-07 1236079107181510656
+- Mar-08 1236441496645140482
 
 
 
 
 ```{r demoen}
-init_id = "1234629554129506306" # the last known id in 2020-02-12
-end_datetime = "2020-03-02 12"
+#Sys.sleep(15*60)
+init_id = "1236441496645140482" # the last known id in 2020-02-12
+end_datetime = "2020-03-07 12"
 q = "#COVID2019 OR #coronavirus"
-fdate="0302"
+fdate="0307"
+
 
 crabbingGlobal(q,init_id,fdate, end_datetime)
+```
+
+
+```{r}
+
+end_it = "2020-03-07 00"
+fdate_it="0307"
+Sys.sleep(15*60)
+crabbingGlobal(q,it_id,fdate_it, end_it)
 ```
