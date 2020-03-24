@@ -1,0 +1,283 @@
+---
+title: "2DataView"
+author: "Guirong Fu"
+date: "March 24, 2020"
+output: html_document
+---
+
+Main task: have an overview of the data
+
+- Impact: 
+  
+    - Google trend
+    - Twitter data pattern
+
+- Infection statistics
+
+- Immediacy measure (geo-data?)
+
+```{r prepare, message=FALSE}
+rm(list=ls())
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+```
+
+```{r googleimpact}
+getwd() %>% paste0("/data/")->path
+files = dir(path)
+googlefile = files[grep("Google\\s?",files)]
+tables<-c()
+for(f in googlefile){
+  gtable<-read.csv(paste0(path,f),stringsAsFactors = FALSE)
+  colnames(gtable)<-gtable[2,]
+  gtable$Day<-as.Date(gtable$Day,"%m/%d/%Y")
+  tab<-gtable[3:nrow(gtable),]
+  tables<-rbind(tables,tab)
+}
+View(tables)
+plot(tables$`United States`[13:32],type="l")
+lines(tables$`United States`[33:(32-13+33)],type="l",col="red",add=T)
+dat<-tables[,2:ncol(tables)]
+dat_num<-sapply(dat,as.integer)
+dat_num
+diff_first<-dat_num[33:(32-13+33),]-dat_num[13:32,]
+plot(diff_first,type="l")
+
+# Question: how to regularize Google trend index???
+apply(diff_first,MARGIN=2,mean)
+
+PlotGooglgeDiff<-function(cname,dat){
+  
+  plot_list<-list(x1=dat[33:(32-13+33),cname],x2=dat[13:32,cname],title=cname)
+  plot(plot_list$x1,type="l",main=plot_list$title,ylim = c(min(plot_list$x1,plot_list$x2)-2,max(plot_list$x1,plot_list$x2)+2))
+  lines(plot_list$x2,col="red")
+
+  plot(plot_list$x1,plot_list$x2,xlab = "Later Records",ylab="Earlier Records",main=plot_list$title)
+}
+PlotGooglgeDiff("Canada",dat_num)
+PlotGooglgeDiff("United States",dat_num)
+PlotGooglgeDiff("Taiwan",dat_num)
+
+# Solution: the overlapped part take the average, the outer parts are rectified by the bias.
+# bias is defined by the average of the difference between the later and earlier records.
+# the rectified earlier record = earlier record + bias/2,
+# the rectified later record = later record - bias/2
+# for example, all the later records are 5 larger than the earlier ones.
+# earlier ones: 1,2,3,(4,5,6,5,4,3,2,2)(overlapped ones)
+# later ones:   (9,10,11,10,9,8,7,6,6),8,9,10,10,10
+# bias: 5, bias/2: 2.5
+# rectified earlier: 3.5,4.5,5.5,(6.5,7.5,8.5,7.5,6.5,5.5,4.5,4.5)
+# recfified later:  (6.5,7.5,8.5,7.5,6.5,5.5,4.5,4.5),5.5,6.5,7.5,7.5,7.5
+
+RectifyBias<-function(cname,dat,start,step,end){
+  table<-data.frame(later=dat[(start+step+1):(start+step*2+1),cname],earlier = dat[start:(start+step),cname])
+  bias<-mean(table$later-table$earlier)
+  overlapped<-apply(table,MARGIN = 1,mean)
+  table_rec<-c(dat[1:(start-1),cname]+bias/2,overlapped,dat[(start+step*2+2):end,cname]-bias/2)
+  return(table_rec)
+}
+start=13
+step=32-13
+end=50
+rec_canada<-RectifyBias("Canada",dat_num,start,step,end)
+
+plot(rec_canada[1:(start+step)],type="l",main="Compare Rectificaiton (Earlier)")
+lines(dat_num[1:(start+step),"Canada"],col="red")
+
+plot(rec_canada[start:length(rec_canada)],type="l",main="Compare Rectificaiton (Later)")
+lines(dat_num[(start+step+1):(length(rec_canada)+step+1),"Canada"],col="blue")
+
+# overlapped:
+# the first part: 11-30,31-50,
+countries<-colnames(dat_num)
+countries
+overlap_first<-sapply(countries, RectifyBias, dat=dat_num, start=11,step=30-11,end=60)
+overlap_first
+
+date_first<-c(tables$Day[1:10],tables$Day[31:60])
+date_first
+
+plot(overlap_first[,2],type="l")
+lines(dat_num[31:60,2],col="red")
+
+# the second part:
+dat_num_sec<-rbind(overlap_first,dat_num[61:nrow(dat_num),])
+date_second<-c(date_first,tables$Day[61:nrow(tables)])
+date_second
+
+# 23-40,41-58
+overlap_second<-sapply(countries,RectifyBias,dat=dat_num_sec,start=23,step=40-23,end=nrow(dat_num_sec))
+date_final<-c(date_second[1:22],date_second[41:length(date_second)])
+
+cid=5
+plot(date_final,overlap_second[,cid],type="l",main=countries[cid])
+
+Standarize100<-function(cname,dat,minv=1,maxv=100){
+  vec=dat[,cname]
+  maxd=max(vec)
+  mind=min(vec)
+  k = (maxv-minv)/(maxd-mind)
+  c = (maxd*minv-mind*maxv)/(maxd-mind)
+  return(k*vec+c)
+  
+}
+
+#dat_stand<-Standarize100(countries[cid],overlap_second)
+#plot(date_final,overlap_second[,cid],type="l",main=countries[cid])
+#lines(date_final,dat_stand,col="red")
+
+dat_stand<-sapply(countries,Standarize100,dat=overlap_second)
+df_plot<-melt(dat_stand)
+df_plot["Day"]<-rep(date_final,ncol(dat_stand))
+ggplot(df_plot, aes(x=Day, y=value)) + geom_line(aes(color=Var2))
+
+write.csv(cbind(Day=as.character(date_final),dat_stand),file=paste0(path,"google_rectified.csv"))
+```
+
+
+```{r strength}
+strength<-read.csv(paste0(path,"worldwide.csv"),header = F, stringsAsFactors = F)[1:108,1:42]
+strength<-t(strength)
+strength[1,1]="Date"
+strength<-as.matrix(strength)
+colnames(strength)<-strength[1,]
+dat_strength<-as.data.frame(strength[2:nrow(strength),],stringsAsFactors = F)
+dates_strength<-as.Date(dat_strength$Date,"%m/%d/%Y")
+dat_no_date<-dat_strength[,2:ncol(dat_strength)]
+dat_no_date[dat_no_date==""]="0"
+dat_strength_num<-sapply(dat_no_date, as.integer)
+
+
+cname="Germany"
+
+ex_impact<-dat_stand[9:nrow(dat_stand),cname]
+ex_diff<-c(0,diff(dat_strength_num[,cname]))
+cor.test(ex_impact,ex_diff)
+
+plot(ex_impact,type="l",ylim=c(1,100))
+lines(dat_strength_num[,cname]/max(dat_strength_num[,cname])*100,col="red")
+lines(dat_strength_num[,"overall"]/max(dat_strength_num[,"overall"])*100,col="blue")
+lines(ex_diff/max(ex_diff)*100,col="yellow")
+
+date_final
+View(strength)
+sum(strength=="")
+strength[106,]
+
+```
+
+
+```{r twitter-view-en}
+
+twitterfiles = files[grep("Tweet\\s?",files)]
+
+# use each hour as unit, check how many retweet, tweet
+ExtractHours<-function(tm){
+  t<-as.POSIXlt(tm)
+  t$hour
+}
+
+for(i in 1:3){
+  fname<-twitterfiles[i]
+  load(paste0(path,fname))
+  twit_demo<-check_tweets
+  hours<-sapply(twit_demo$created_at,ExtractHours)
+  data.frame(hour=hours,retweet=twit_demo$is_retweet) %>% group_by(hour)%>%summarise(cnt=sum(retweet),ttl=n())->twit_stat
+
+  twit_plot<-melt(twit_stat,id="hour")
+  ggplot(twit_plot, aes(fill=variable, y=value, x=hour)) + 
+    geom_bar(position = 'dodge', stat="identity")+labs(title=fname)
+
+}
+
+
+```
+
+
+```{r twitter-de-view}
+defiles = dir(paste0(path,"de/"))
+
+fname<-defiles[1]
+load(paste0(path,"de/",fname))
+twit_demo<-tweets
+hours<-sapply(twit_demo$created_at,ExtractHours)
+data.frame(hour=hours,retweet=twit_demo$is_retweet) %>% group_by(hour)%>%summarise(cnt=sum(retweet),ttl=n())->twit_stat
+
+twit_plot<-melt(twit_stat,id="hour")
+ggplot(twit_plot, aes(fill=variable, y=value, x=hour)) + 
+  geom_bar(position = 'dodge', stat="identity")+labs(title=fname)
+
+
+```
+
+
+```{r twitter-ru-view}
+rufiles = dir(paste0(path,"ru/"))
+
+fname<-rufiles[1]
+load(paste0(path,"ru/",fname))
+twit_demo<-tweets
+hours<-sapply(twit_demo$created_at,ExtractHours)
+data.frame(hour=hours,retweet=twit_demo$is_retweet) %>% group_by(hour)%>%summarise(cnt=sum(retweet),ttl=n())->twit_stat
+
+twit_plot<-melt(twit_stat,id="hour")
+ggplot(twit_plot, aes(fill=variable, y=value, x=hour)) + 
+  geom_bar(position = 'dodge', stat="identity")+labs(title=fname)
+
+
+```
+
+
+```{r twitter-ko-view}
+kofiles = dir(paste0(path,"ko/"))
+fname<-kofiles[20]
+
+load(paste0(path,"ko/",fname))
+twit_demo<-tweets
+hours<-sapply(twit_demo$created_at,ExtractHours)
+data.frame(hour=hours,retweet=twit_demo$is_retweet) %>% group_by(hour)%>%summarise(cnt=sum(retweet),ttl=n())->twit_stat
+
+twit_plot<-melt(twit_stat,id="hour")
+ggplot(twit_plot, aes(fill=variable, y=value, x=hour)) + 
+  geom_bar(position = 'dodge', stat="identity")+labs(title=fname)
+
+
+```
+
+
+
+```{r twitter-hi-view}
+hifiles = dir(paste0(path,"hi/"))
+fname<-hifiles[20]
+
+load(paste0(path,"hi/",fname))
+twit_demo<-tweets
+hours<-sapply(twit_demo$created_at,ExtractHours)
+data.frame(hour=hours,retweet=twit_demo$is_retweet) %>% group_by(hour)%>%summarise(cnt=sum(retweet),ttl=n())->twit_stat
+
+twit_plot<-melt(twit_stat,id="hour")
+ggplot(twit_plot, aes(fill=variable, y=value, x=hour)) + 
+  geom_bar(position = 'dodge', stat="identity")+labs(title=fname)
+
+
+```
+
+
+
+```{r twitter-it-view}
+itfiles = dir(paste0(path,"it/"))
+fname<-itfiles[20]
+
+load(paste0(path,"it/",fname))
+twit_demo<-tweets
+hours<-sapply(twit_demo$created_at,ExtractHours)
+data.frame(hour=hours,retweet=twit_demo$is_retweet) %>% group_by(hour)%>%summarise(cnt=sum(retweet),ttl=n())->twit_stat
+
+twit_plot<-melt(twit_stat,id="hour")
+ggplot(twit_plot, aes(fill=variable, y=value, x=hour)) + 
+  geom_bar(position = 'dodge', stat="identity")+labs(title=fname)
+
+
+```
+
