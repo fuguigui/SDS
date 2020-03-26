@@ -11,14 +11,19 @@ output: html_document
 #rm(list=ls())
 library(dplyr)
 library(rtweet,lib.loc="./lib/") # you can change to your lib location
+api_key <- "VWWcdtFA3fLW92nBryikpgR8B"
+api_secret_key <- "77E6tRxJb6wafNe5fJw3iRkelnkEPurkyVqALAb2La9SqAOs07"
 
-api_key <- "..."
-api_secret_key <- "..."
+access_token <- "790192685256613888-lxUV5nhjYhijjBpFDO3gBcTAaSVxT2Q"
+access_token_secret <- "EXuLZZjl8mqX7VBQP4yK3QbXXAGDUZID7SMbPgdBjA15F"
 
+## authenticate via web browser
 token <- create_token(
-  app = "...",
+  app = "SocialDSFufu",
   consumer_key = api_key,
-  consumer_secret = api_secret_key)
+  consumer_secret = api_secret_key,
+  access_token = access_token,
+  access_secret = access_token_secret)
 ```
 
 ## Functions
@@ -31,7 +36,7 @@ crabbingGlobal<-function(q, init_id, fdate, end_datetime){
   end_date_num<-as.numeric(as.POSIXlt.character(end_datetime,tz="GMT",format="%Y-%m-%d %H"))
   limit = rate_limit(token = token, "search/tweets")
   n = (limit$remaining-5)*100
-  if(n<20){
+  if(n<500){
     print("rate limit reached, waiting")
     Sys.sleep(15*60)
     n = 17500
@@ -48,7 +53,7 @@ crabbingGlobal<-function(q, init_id, fdate, end_datetime){
   while(as.numeric(last_time) > end_date_num){
     limit = rate_limit(token = token, "search/tweets")
     n = (limit$remaining-5)*100
-    if(n<20){
+    if(n<1000){
       print("rate limit reached, waiting")
       Sys.sleep(15*60)
       n = 17500
@@ -134,38 +139,73 @@ crabbingData<-function(n, queries, languages,since_ids,init_date, end_date){
 ```
 
 ## Usage demo
-
-- hi:#कोरोन
+- hi:#???????????????
   - Feb-26 1232436628724994048
   - Feb-27 1232816300700917760
   - Feb-28 1233179448704290817
   - Feb-29 1233541459086757888
   - Mar-01 1233904495769378816 (2020-02-29 23:59)
   - Mar-02 1234266680504786947
+  - Mar-03 1234626122836475904
+  - Mar-04 1234991455065608192
+  - Mar-05 1235354132707291136
+  - Mar-06 1235716442965700608
+  - Mar-07 1236079106858631168
+  - Mar-08 1236441487790837760
+  - Mar-09 1236803811911450624
+  - Mar-10 1237165539119599616
+  - Mar-11 1237528114575446017
   
-- ko: #코로나
+- ko: #?????????
   - Feb-26 1232455178244083712
   - Feb-27 1232817029263941634
   - Feb-28 1233179639863865344
   - Feb-29 1233542368542019584
   - Mar-01 1233903629305729026 (2020-02-29 23:59)
   - Mar-02 1234267085288509440 (2020-03-01 23:59)
+  - Mar-03 1234629518536495104
+  - Mar-04 1234991623794126850
+  - Mar-05 1235354019880550401
+  - Mar-06 1235714687053860864
+  - Mar-07 1236078298989350912
+  - Mar-08 1236440938903302144
+  - Mar-09 1236802717500112896
+  - Mar-10 1237165522506018817
+  - Mar-11 1237528634472071169
   
-- ru: #коронавирус
+- ru: #??????????????????????
   - Feb-26 1232454012382801920
   - Feb-27 1232817488775217152
   - Feb-28 1233179116855332864
   - Feb-29 1233541440581623820
   - Mar-01 1233904267355779074 (2020-02-29 23:59)
   - Mar-02 1234266802898821122
+  - Mar-03 1234629386395115533
+  - Mar-04 1234990709502922753
+  - Mar-05 1235352946013073409
+  - Mar-06 1235711613803651073
+  - Mar-07 1236078939551956992
+  - Mar-08 1236440826491871233
+  - Mar-09 1236802953475915776
+  - Mar-10 1237165653313937410
+  - Mar-11 1237528529681571840
   
   
-- ja: #コロナウイルス
+- ja: #?????????????????????
   - Feb-27 1232817604118474752
   - Feb-28 1233180005401645058
   - Feb-29 1233542395540754432
   - Mar-01 1233904779950080000 (2020-02-29 23:59)
   - Mar-02 1234267164862844928
+  - Mar-03 1234629551545704448
+  - Mar-04 1234991944473858050
+  - Mar-05 1235354323321683968
+  - Mar-06 1235716722113445888
+  - Mar-07 1236079090483986438
+  - Mar-08 1236441486104735744
+  - Mar-09 1236803878928003072
+  - Mar-10 1237166264411287552
+  - Mar-11 1237528657301667840
 
 - de: (same)
   - Feb-27 1232817581989531648
@@ -173,6 +213,15 @@ crabbingData<-function(n, queries, languages,since_ids,init_date, end_date){
   - Feb-29 1233542394093719552
   - Mar-01 1233904751059853312 (2020-02-29 23:59)
   - Mar-02 1234267165555150848
+  - Mar-03 1234629554129506306
+  - Mar-04 1234991899087273984
+  - Mar-05 1235354310323695623
+  - Mar-06 1235716637069905921
+  - Mar-07 1236079101657731073
+  - Mar-08 1236441486973165568
+  - Mar-09 1236803869746790401
+  - Mar-10 1237166240424058880
+  - Mar-11 1237528636023951360
 
   
 - it: (same)
@@ -181,15 +230,17 @@ crabbingData<-function(n, queries, languages,since_ids,init_date, end_date){
   - Feb-29 1233542374464401410
   - Mar-01 1233904767883186177 (2020-02-29 23:59)
   - Mar-02 1234267169950752768
-  
+  - Mar-03 1234629522613403649
+  - Mar-04 1234991932373258241
+  - Mar-05 1235354330208890880
+  - Mar-06 1235716708763086849
+  - Mar-07 1236079107181510656
+  - Mar-08 1236441496645140482
+  - Mar-09 1236803886163394561
+  - Mar-10 1237166266630144002
+  - Mar-11 1237528654369837056
 
 
-en:
-- Feb-27 1232817608002588673
-- Feb-28 1233180005401645058
-- Feb-29 1233542374464401410 (2020-02-28 23:59)
-- Mar-01 1233904779950080000
-- Mar-02 1234267169950752768
 
 
 ```{r demo-languages}
@@ -205,36 +256,49 @@ queries=c(q_hi,q_ko,q_ru,q_ja,q_en,q_en)
 languages = c("hi","ko","ru","ja","de","it")
 
 # ids refer to the ealiest ids we want (excluded).
-id_hi = "1236441487790837760"
-id_ko = "1236440938903302144"
-id_ru = "1236440826491871233"
-id_ja = "1236441486104735744"
-id_de = "1236441486973165568"
-id_it = "1236441496645140482"
+id_hi = "1237528114575446017"
+id_ko = "1237528634472071169"
+id_ru = "1237528529681571840"
+id_ja = "1237528657301667840"
+id_de = "1237528636023951360"
+id_it = "1237528654369837056"
 ids = c(id_hi,id_ko,id_ru,id_ja,id_de,id_it)
 
-# ids = last_ids
-init_date = "0307"
-end_date = "2020-03-08"
+ids = last_ids
+init_date = "0311"
+end_date = "2020-03-12"
+
 last_ids = crabbingData(6,queries,languages,ids,init_date,end_date)
 
 
 # if you need to customize the query of language, please refer to the following code. This is an example for 3 languages.
-#qs= c(q_ja,q_en,q_en)
-#ls = c("ja","de","it")
-#is = c(id_ja,id_de,id_it)
-#last_ids = crabbingData(3,qs,ls,is,init_date,end_date)
+#qs= c(q_en,q_en)
+#ls = c("de","it")
+#is = c(id_de,id_it)
+#last_ids = crabbingData(2,qs,ls,is,init_date,end_date)
 
 ```
 
 
+en:
+- Feb-27 1232817608002588673
+- Feb-28 1233180005401645058
+- Feb-29 1233542374464401410 (2020-02-28 23:59)
+- Mar-01 1233904779950080000
+- Mar-02 1234267169950752768
+
+- Mar-09 1236803886163394561
+- Mar-10 1237166266630144002
+- Mar-11 1237528657301667840
+
 
 ```{r demoen}
-init_id = "1236441496645140482" # the last known id in 2020-02-12
-end_datetime = "2020-03-07 12"
+init_id = "1237528657301667840" # the last known id in 2020-02-12
+end_datetime = "2020-03-10 12"
 q = "#COVID2019 OR #coronavirus"
-fdate="0307"
+fdate="0310"
 
-
+#load("./data/Tweet0307en.RData")
+#save(tweets,file="./data/Tweet0307en01.RData")
 crabbingGlobal(q,init_id,fdate, end_datetime)
 ```
