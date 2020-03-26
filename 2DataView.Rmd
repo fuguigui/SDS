@@ -132,7 +132,7 @@ df_plot<-melt(dat_stand)
 df_plot["Day"]<-rep(date_final,ncol(dat_stand))
 ggplot(df_plot, aes(x=Day, y=value)) + geom_line(aes(color=Var2))
 
-write.csv(cbind(Day=as.character(date_final),dat_stand),file=paste0(path,"google_rectified.csv"))
+#write.csv(cbind(Day=as.character(date_final),dat_stand),file=paste0(path,"google_rectified.csv"))
 ```
 
 
@@ -163,7 +163,7 @@ lines(ex_diff/max(ex_diff)*100,col="yellow")
 date_final
 View(strength)
 sum(strength=="")
-strength[106,]
+#strength[106,]
 
 ```
 
@@ -280,4 +280,144 @@ ggplot(twit_plot, aes(fill=variable, y=value, x=hour)) +
 
 
 ```
+
+# Strength
+
+create features to measure strength for each target: from the following data:
+
+- accumulated confirmed case number
+
+- accumulated recovered case number
+
+- accumulated death case number
+
+- total population.
+
+The features are:
+
+Absolute index
+
+- confirmed/recovered/death case number: accumulated value, daily newly increasing number
+
+- the currently existing case: accumulated confirmed value minus accumulated recovered or dead value
+
+Relative index:
+
+- nation size effect: accumulated value /the total population
+
+- the daily newly recovered rate: today's newly covered number/the newly recovered number on one day ago
+
+- the death rate: accumulated death number/accumulated confirmed number
+
+- the heal rate: accumulated recovered number/accumulated confirmed number
+
+- the "risk" level: 
+
+  - daily recoverd number/daily death number
+  
+  - accumulated recovered numbr/accumulated death number
+
+```{r strengthFeature}
+ExtractStrengthFeature<-function(dat, pop){
+  # the data is n*3 matrix(data frame)
+  # row: each row represents one day. Ordered from the old to new, without missing days
+  # column: accumulated confirmed, accumulated recovered, accumulated dead
+  
+  # daily newly absolute values
+  dat_daily<-apply(dat,MARGIN = 2,diff)
+  dat_daily<-as.data.frame(rbind(c(0,0,0),dat_daily))
+  rownames(dat_daily)<-rownames(dat)
+  
+  # ratio to the population
+  dat_ratio_pop<-dat/pop*10000
+  dat_exist<-dat$confirm-dat$recover-dat$death
+  
+  # relative index
+  # the daily newly recovered rate
+  recover_lagged<-c(1,dat_daily$recover[2:nrow(dat_daily)])
+  recover_lagged[recover_lagged==0]<-1
+  dat_daily_recover_rat<-dat_daily$recover/recover_lagged
+  
+  # the death rate
+  confirm_nonzero<-dat$confirm
+  confirm_nonzero[confirm_nonzero==0]<-1
+  dat_death_rate<-dat$death/confirm_nonzero
+  
+  
+  # the heal rate
+  dat_heal_rate<-dat$recover/confirm_nonzero
+  
+  # daily recoverd number/daily death number
+  death_nonzero<-dat_daily$death
+  death_nonzero[death_nonzero==0]<-1
+  dat_risk_daily<-dat_daily$recover/death_nonzero
+  
+  # accumulated recovered numbr/accumulated death number
+  death_nonzero<-dat$death
+  death_nonzero[death_nonzero==0]<-1
+  dat_risk_ttl<-dat$recover/death_nonzero
+  
+  dat_features<-cbind(dat,dat_daily,dat_ratio_pop,dat_exist,dat_daily_recover_rat,dat_death_rate,dat_heal_rate,dat_risk_daily,dat_risk_ttl)
+  head(dat_features)
+  oldnames<-colnames(dat)
+  colnames(dat_features)<-c(oldnames,sapply(oldnames,paste0,"_daily"),sapply(oldnames,paste0,"_RP"),"Exists","ReDR","DeathR","HealR","RiskD","RiskT")
+  # _RP: ratio to the total population
+  # Exists: the accumulated existing case
+  # ReDR: recover daily ratio: today's recover/yesterday's recover
+  # DeathR: accumulated death/accumulated confirmed
+  # HealR: accumulated recover/ accumulated confirmed
+  # RiskD: daily risk: daily recoverd/daily death
+  # RiskT: total risk: accumualted recoverd/accumulated death
+  return(dat_features)
+}
+
+
+
+
+
+```
+
+
+```{r}
+files=dir(path)
+covid = files[grep("[0-9]?covid\\s?",files)]
+ReadCovid<-function(fname){
+  covid1<-as.data.frame(t(read.csv(paste0(path,fname),header = F, stringsAsFactors = F)),stringsAsFactors = F)
+  rownames(covid1)<-covid1[,1]
+  colnames(covid1)<-covid1[2,]
+  covid1<-covid1[5:nrow(covid1),2:ncol(covid1)]
+  return(covid1)
+}
+
+covid_confirm<-ReadCovid(covid[1])
+covid_deadnum<-ReadCovid(covid[2])
+covid_recover<-ReadCovid(covid[3])
+
+covid_demo<-data.frame(confirm=as.numeric(covid_confirm$Italy)[1:63],
+                       recover=as.numeric(covid_recover$Italy),
+                       death=as.numeric(covid_deadnum$Italy)[1:63])
+rownames(covid_demo)<-rownames(covid_recover)
+head(covid_demo)
+```
+
+```{r get-population}
+library(rjson)
+library(jsonlite)
+
+#pop_json<-jsonlite::stream_in(file(paste0(path,"world_population.json")),pagesize = 500)
+pop_dat<-fromJSON(paste0(readLines(paste0(path,"world_population.json"))))
+pop_data<-as.integer(pop_dat$population)
+names(pop_data)<-pop_dat$country
+
+pop_demo=pop_data["Italy"]
+```
+
+```{r extract-features-demo}
+features_demo<-ExtractStrengthFeature(covid_demo,pop_demo)
+head(features_demo)
+features_demo[30:40,]
+```
+
+
+
 

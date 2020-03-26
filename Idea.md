@@ -197,3 +197,134 @@ Hashtags: #COVID2019 OR #coronavirus
 - https://link.springer.com/chapter/10.1007%2F978-1-4612-4634-3_6
 - [Dynamic Social Impact](https://link.springer.com/chapter/10.1007%2F978-94-015-8686-3_15)
 - [statistical mechanics of social impact](https://xueshu.baidu.com/usercenter/paper/show?paperid=34a319f947c315cd69a52208abe04c19&site=xueshu_se)
+
+
+
+
+
+# 3-24 Discussion
+
+- strength (my work):
+
+  - cumulative infectious number
+  - infectious rate 
+  - death number
+    - rate
+    - ...
+  - newly increase number
+
+  总体想法是：
+
+  确诊人数，死亡人数，治愈人数的：
+
+  当前总量，每日新增量，与总人口的比例 (3*3=9)
+
+  现存确诊数量
+
+  
+
+  今日确诊/前日确诊 
+
+  死亡率：累计死亡人数/累计确诊人数
+
+  治愈率：累计治愈人数/累计确诊人数
+
+  治愈率/死亡率
+
+  新增治愈/新增死亡
+
+[kuosan-xiaowang](http://www.ldfmes.com/index.php/new/index/g/c/id/31.html)
+
+[population-data-source](https://github.com/samayo/country-json/blob/master/src/country-by-population.json)
+
+
+
+- immediacy 
+
+  - center-distance geology
+
+  - geo-distance: 
+
+    - train, airport numbers
+
+  - neighbor nations (my work)
+
+    - abstract as a social network distances
+
+    [zhihu](https://www.zhihu.com/search?type=content&q=%E7%96%AB%E6%83%85%E6%8C%87%E6%A0%87)
+
+- impact
+  - Google: 
+  - Twitter: 
+
+
+
+Guirong's TODO:
+
+- [x] Strength features
+- [x] Countries split as target/source
+- [ ] immediacy definition from social network.
+
+
+
+Target/source:
+
+de: 德国，奥地利，列支敦士登，瑞士（加权） 省略： 比利时，卢森堡
+
+hi：印度
+
+it：意大利，圣马力诺，梵蒂冈。瑞士（加权）
+
+ja：日本
+
+ko：韩国
+
+ru：俄罗斯
+
+
+
+其他：
+
+欧洲：
+
+- 西班牙，葡萄牙
+- 法国，比利时，荷兰
+- 英国，爱尔兰
+- 北斗：丹麦，瑞典，挪威，芬兰
+- 中欧：波兰，捷克，斯洛伐克，匈牙利，斯洛文尼亚
+- 南欧：克罗地亚，波黑，黑山，阿尔巴尼亚，马其顿，塞尔维亚，罗马尼亚，保加利亚，希腊
+- 东欧：爱沙尼亚、拉脱维亚、立陶宛、白俄罗斯、乌克兰、摩尔多瓦
+
+
+
+亚洲：[baidu](http://baijiahao.baidu.com/s?id=1580112582664312611&wfr=spider&for=pc)
+
+[sohu](https://www.sohu.com/a/214525334_794891)
+
+- 西亚：伊朗、伊拉克、阿塞拜疆、格鲁吉亚、亚美尼亚、
+
+  土耳其、叙利亚、约旦、以色列、巴勒斯坦、沙特阿拉伯、巴林、卡塔尔、也门、阿曼、阿拉伯联合酋长国、科威特、黎巴嫩、塞浦路斯、阿富汗
+
+- 中亚：哈萨克斯坦、吉尔吉斯斯坦、塔吉克斯坦、乌兹别克斯坦、土库曼斯坦
+
+- 南亚：尼泊尔、不丹、巴基斯坦、孟加拉、斯里兰卡、马尔代夫
+
+- 蒙古（东亚）
+
+- 东南亚：越南、老挝、柬埔寨、泰国、缅甸、马来西亚、新加坡、印度尼西亚、文莱、菲律宾、东帝汶
+
+北美洲：加拿大，墨西哥，美国
+
+中美洲：危地马拉、洪都拉斯、萨尔瓦多、尼加拉瓜、哥斯达黎加、巴拿马、古巴、海地、多米尼克、牙买加、特立尼达和多巴哥、巴巴多斯、格林纳达、圣卢西亚、圣文森特和格林纳丁斯、巴哈马、圣基茨和尼维斯、伯利兹
+
+南美洲：圭亚那、苏里南、委内瑞拉、哥伦比亚、巴西、厄瓜多尔、秘鲁、玻利维亚、智利、阿根廷、巴拉圭、乌拉圭、安提瓜、巴布达
+
+非洲：
+
+- 北非：埃及、苏丹、利比亚、突尼斯、阿尔及利亚、摩洛哥、亚速尔群岛、马德拉群岛
+- 东非：埃塞俄比亚、厄立特里亚、索马里、吉布提、肯尼亚、坦桑尼亚、乌干达、卢旺达、布隆迪、塞舌尔
+- 西非：毛里塔尼亚、西撒哈拉、塞内加尔、冈比亚、马里、布基纳法索、几内亚、几内亚比绍、佛得角、萨拉里昂、利比里亚、科特迪瓦、加纳、多哥、贝宁、尼日尔、尼日利亚、加那利群岛
+- 中非：乍得、中非、喀麦隆、赤道几内亚、加蓬、刚果（布）、刚果（金）、圣多美、普林西比
+- 南非：赞比亚、安哥拉、津巴布韦、马拉维、莫桑比克、博茨瓦纳、纳米比亚、南非共和国、斯威士兰、莱索托、马达加斯加、科摩罗、毛里求斯、留尼汪岛、圣赫勒拿岛、阿森松岛
+
+大洋洲：澳大利亚、新西兰 、巴布亚新几内亚 、所罗门群岛、北马里亚纳群岛（美国） 、帕劳、 瓦努阿图 、瑙鲁 、图瓦卢 、基里巴斯 、萨摩亚 、美属萨摩亚、纽埃（新西兰） 、库克群岛（新西兰） 、汤加 、密克罗尼西亚联邦 、皮特凯恩（英国） 、新喀里多尼亚（法国） 、斐济群岛 、密克罗尼亚联邦 、马绍尔群岛 、关岛（美国） 、托克劳（新西兰） 、瓦利斯和富图纳（法国） 、法属波利尼西亚
