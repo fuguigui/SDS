@@ -418,6 +418,93 @@ head(features_demo)
 features_demo[30:40,]
 ```
 
+# Immediacy
 
+From the social network view, I use two ways to measure immediacy
+
+- the length of the shortest path
+
+- the high power of transition matrix.
+
+Each target/source is viewed as a node in a network. For the two have border touch, there exists an edge between these two nodes. In this way, the two targets(or sources) who are contiguous to each other, are connected in the network.
+
+## Shortest path
+
+The length of the shortest path is the classic measurment of the distance between a pair of nodes in a graph.
+
+## High power of transition matrix
+
+This is a self-created immediacy measurement, inspired by the eigenvector centrality in social networks. 
+
+The element at (i,j) in the high power t of the transition matrix could be viewed as the probability of going from i to j in t steps. 
+
+
+- If the matrix is aperiodic, the elements would converge to constant values. We use large finite power times to approximate the final constat values.
+
+- If the matrix is periodic, there would be several converged matrixs with big enough power times. We simulate by multiple times of high finite power and take the average of them. 
+
+Here, we assume we are given an undirected network without isolate nodes, which means the matrix is irreducible.
+
+We create this measurement to distinguish the following case which is the same in the shortest-path measurement:
+
+Two nodes have the same length of shortest path from an anchored node, but different numbers of shortest paths.
+
+Intuitively, the node with more shortest paths should be more immediate to the anchored node.
+
+One issue of this measurement is this is unsymmetric, applicable for directed network, instead of undirected network. Maybe only for an additional choice???
+
+A toy example:
+A-B
+A-C
+A-D
+A-E
+D-F
+E-F
+
+The length of the shortest path between (A,C) is 2, the same for (A,F).
+However, there is only one path (A-B-C) with length 2 between A and C, but 2 (A-D-F, A-E-F)with respect for A and F.
+We will say F is more immediate to A than C.
+
+```{r immediacy}
+mat<-matrix(c(0,1,0,1,1,0,
+                1,0,1,0,0,0,
+                0,1,0,0,0,0,
+                1,0,0,0,0,1,
+                1,0,0,0,0,1,
+                0,0,0,1,1,0),nrow=6)
+
+g<-graph.adjacency(mat,mode = "undirected")
+shortest.paths(g)
+diag_mat<-diag(1/degree(g))
+mat_weight = t(mat)%*%diag_mat
+
+ImmediacyProb<-function(mat, iter=20,powertimes=7){
+  mat_list<-list()
+  mat_sum<-matrix(0,ncol = ncol(mat),nrow=nrow(mat))
+  for(i in 1:iter){
+    base_mat = mat
+    pot<-1
+    for(j in 1:powertimes){
+      base_mat = base_mat %*% base_mat
+      pot<-2*pot
+      rand_number<-runif(1)
+      if(rand_number<0.5){
+        base_mat = base_mat %*% mat
+        pot<-pot+1
+      }
+    }
+    print(pot)
+    mat_list[[i]]<-base_mat
+    mat_sum = mat_sum + base_mat
+  }
+  mat_sum/iter
+}
+
+im_prob = ImmediacyProb(mat_weight,powertimes = 8,iter=1)
+im_prob
+
+# [3,1] (A->C) has lower value than [6,1] (A->F) in the second measurement but the same in the shortest path measurement.
+
+```
 
 

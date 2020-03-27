@@ -263,7 +263,7 @@ Guirong's TODO:
 
 - [x] Strength features
 - [x] Countries split as target/source
-- [ ] immediacy definition from social network.
+- [x] immediacy definition from social network.
 
 
 
@@ -328,3 +328,10 @@ ru：俄罗斯
 - 南非：赞比亚、安哥拉、津巴布韦、马拉维、莫桑比克、博茨瓦纳、纳米比亚、南非共和国、斯威士兰、莱索托、马达加斯加、科摩罗、毛里求斯、留尼汪岛、圣赫勒拿岛、阿森松岛
 
 大洋洲：澳大利亚、新西兰 、巴布亚新几内亚 、所罗门群岛、北马里亚纳群岛（美国） 、帕劳、 瓦努阿图 、瑙鲁 、图瓦卢 、基里巴斯 、萨摩亚 、美属萨摩亚、纽埃（新西兰） 、库克群岛（新西兰） 、汤加 、密克罗尼西亚联邦 、皮特凯恩（英国） 、新喀里多尼亚（法国） 、斐济群岛 、密克罗尼亚联邦 、马绍尔群岛 、关岛（美国） 、托克劳（新西兰） 、瓦利斯和富图纳（法国） 、法属波利尼西亚
+
+
+
+## Immediacy (Social network)
+
+- the length of the shortest path （yes）
+- 邻接矩阵高次幂？？？从一个点到另一个点，初始化起始点为1，其余为0 （不是很好。）
