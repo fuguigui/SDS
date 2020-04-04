@@ -1,0 +1,148 @@
+---
+title: "3TwitterImpact"
+author: "Haojun Cai"
+date: "4/4/2020"
+output: html_document
+---
+
+# For languages except "en"
+
+```{r function}
+calImpact <- function(languages,init_dates){
+  
+  # Load data
+  for (lang in languages){
+    for (date in init_dates){
+      dname = paste(lang,date,sep="")
+      fname = paste("./data/",lang,"/Tweet",date,lang,".RData",sep="")
+      load(fname)
+      assign(dname,tweets)
+    }
+  }
+  
+  # Set dates
+  impacts <- data.frame(init_dates)
+  
+  # Initialize impact
+  for (lang in languages){
+    varname = paste(lang,"impact",sep="")
+    assign(varname,c())
+  }
+
+  # Calculate impact
+  for (lang in languages){
+    # print(paste("Calculating the impact for",lang))
+    varname = paste(lang,"impact",sep="")
+    for (date in init_dates){
+      dname = paste(lang,date,sep="")
+      if(date==init_dates[1])
+        varname <- append(eval(as.symbol(varname)),nrow(eval(as.symbol(dname))))
+      else
+        varname <- append(varname,nrow(eval(as.symbol(dname))))
+    }
+    impacts[lang] <- varname
+    print(paste("Finish impact calculation for",lang))
+  }
+
+  return(impacts)
+}
+
+```
+
+# For language "en"
+The speciality of language 'en' is that, sometimes the dataset cannot be scratched completely for once and another second time is needed. So, to combine two datasets on the same day is required to implement. Further, one unexpected error about 'user_id' sometimes occurs. Thus, further calculation is needed to fill in the missing data. That is why the counts per hour is calculated and returned for now as the variable 'impactGlobal'.
+
+```{r function}
+calImpactGlobal <- function(en,init_dates,re_dates){
+  # Load data catched once
+  for (date in init_dates){
+    dname = paste(en,date,sep="")
+    fname = paste("./data","/Tweet",date,"en.RData",sep="")
+    load(fname)
+    assign(dname,tweets)
+  }
+    
+  # Load date catched twice
+  for (date in re_dates){
+    dname = paste(en,date,sep="")
+    fname1 = paste("./data","/Tweet",date,"en_old1.RData",sep="")
+    fname2 = paste("./data","/Tweet",date,"en_old2.RData",sep="")
+    load(fname1)
+    tweet1 <- tweets
+    load(fname2)
+    tweet2 <- tweets
+    assign(dname,rbind(tweet1,tweet2))
+  }
+
+  # Return the last catched time
+  dates = c(init_dates,re_dates)
+  last_createdtime = c()
+  
+  for (date in dates){
+    dname = eval(as.symbol(paste(en,date,sep="")))
+    dname <- dname[order(dname$created_at),]
+    last_createdtime <- append(last_createdtime,dname$created_at[1])
+  }
+
+  # Extract hour information
+  require(lubridate)
+  require(dplyr)
+  
+  impactGlobal <- data.frame(dates)
+  for (i in 12:23){
+    impactGlobal[toString(i)] <- NA  
+  }
+  
+  # Get the statistics per hour
+  for (date in dates){
+    dname = eval(as.symbol(paste(en,date,sep="")))
+    dname["created_at_hour"] = hour(dname$created_at)
+    dname %>% count(created_at_hour) -> stat_hour
+    for (i in 1:nrow(stat_hour)){
+      hour = stat_hour$created_at_hour[i]
+      rowidx = which(impactGlobal==date)
+      impactGlobal[rowidx,toString(hour)] = stat_hour$n[i]
+    }
+  }
+  
+  print(paste("Finish impact calculation for",en,"by hour"))
+  return(list("impactGlobal"=impactGlobal,"last_createdtime"=last_createdtime))
+}
+
+```
+
+# Set the working directory
+Remeber to change the working directory.
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = "E:\\5_Social Data Science\\old_keyword")
+```
+
+# Demo 1
+To test on other datasets, change the variable 'init_dates'.
+
+```{r demo}
+languages = c("hi","ko","ru","ja","de","it")
+init_dates = paste("0",c(311:328),sep="")
+impact = calImpact(languages,init_dates)
+```
+
+# Demo 2
+To test on other datasets, change the variable 'init_dates' and 're_dates' (those dates when the data was scratched for twice) and require to name the data files with respective postfix as '..en_old1.RData' and '..en_old2.RData'. Besides, packages 'lubridate' and 'dplyr' are required to install for this function.
+
+```{r}
+en = c("en")
+init_dates = paste("0",c(310,312:321,323:324,327),sep="")
+re_dates = paste("0",c(311,322,325:326,328),sep="")
+values <- calImpactGlobal(en,init_dates,re_dates)
+impactGlobal <- values$impactGlobal
+last_createdtime <- values$last_createdtime
+```
+
+# Save data
+
+```{r}
+save(impact,file="impact.RData")
+save(impactGlobal,file="impactGlobal.RData")
+```
+
