@@ -151,10 +151,10 @@ geo_info_mean$Node[geo_info_mean$Country.Region%in% amer3]="Am3"
 geo_info_mean$Node[geo_info_mean$Country.Region%in% af1]="Af1"
 geo_info_mean$Node[geo_info_mean$Country.Region%in% af2]="Af2"
 geo_info_mean$Node[geo_info_mean$Country.Region%in% au]="Au"
-write.csv(geo_info_mean,file="./data/node_member.csv")
+write.csv(geo_info_mean,file="./data/Nodes/node_member.csv")
 ```
 
-```{r}
+```{r node-geo-lat-long}
 #filter(geo_info,Country.Region=="Denmark" )
 # United Kingdom, France, Australia, Netherlands, Denmark
 
@@ -167,15 +167,23 @@ geo_info_mean%>% group_by(Node)%>%summarise(lat=mean(lat),long=mean(long))->node
 #node_geo
 node_info<-left_join(geo_info_mean,node_geo,by="Node")
 
-write.csv(node_info,file="./data/node_info.csv")
+write.csv(node_geo,file="./data/Nodes/node_geo.csv")
+write.csv(node_info,file="./data/Nodes/node_info.csv")
 ```
 
+```{r edgelist}
 
-```{r}
+edgelist<-c("Af1","Af2","Af1","As1","Af1","")
+
+
+```
+
+```{r covid-from-country-to-node}
 
 getwd() %>% paste0("/data/")->path
 files=dir(path)
 covid = files[grep("[0-9]?covid\\s?",files)]
+
 ReadCovid<-function(fname){
   #covid1<-as.data.frame(t(read.csv(paste0(path,fname),header = F, stringsAsFactors = F)),stringsAsFactors = F)
   covid1<-read.csv(paste0(path,fname),header = T, stringsAsFactors = F)
@@ -200,35 +208,76 @@ ReadCovid<-function(fname){
   return(covid1)
 }
 
+NodeData<-function(dat,name,node_file){
+  node_file%>% filter(Node==name)%>%select(Country.Region)->countries
+  c_names<-intersect(countries$Country.Region,colnames(dat))
+  if(length(c_names)==1){
+   return(as.numeric(dat[,c_names]))
+  }
+  else{
+    children = dat[,c_names]
+    children = apply(children, 2, as.numeric)
+    return(apply(children,MARGIN=1,FUN=sum))
+  }
+}
+
+AllCountryToNode<-function(covid_dat,node_names,node_info){
+  node_dat<-c()
+  for(n in node_names){
+    each_dat<-NodeData(covid_dat,n,node_info)
+    node_dat<-cbind(node_dat,each_dat)
+  }
+  colnames(node_dat)<-node_names
+  rownames(node_dat)<-rownames(covid_dat)
+  return(node_dat)
+}
+
+
 covid_confirm<-ReadCovid(covid[1])
 covid_deadnum<-ReadCovid(covid[2])
 covid_recover<-ReadCovid(covid[3])
 
-node_name="Af2"
-NodeData<-function(dat,name,node_file){
-  node_file%>% filter(Node==name)%>%select(Country.Region)->countries
-  c_names<-intersect(countries$Country.Region,colnames(dat))
-  children = as.matrix(select(dat,c_names) )
-  children = apply(children, 2, as.numeric)
-  apply(children,MARGIN=1,FUN=sum)
-}
 
-NodeData(covid_confirm,node_name,node_info)
-node_names<-node_geo$Node
+node_confirm<-AllCountryToNode(covid_confirm,node_geo$Node,node_info)
+node_deadnum<-AllCountryToNode(covid_deadnum,node_geo$Node,node_info)
+node_recover<-AllCountryToNode(covid_recover,node_geo$Node,node_info)
 
-node_confirms<-c()
-for(n in node_names){
-  confirm<-NodeData(covid_confirm,n,node_info)
-  node_confirms<-cbind(node_confirms,confirm)
-}
-
-colnames(node_confirms)<-node_names
-rownames(node_confirms)<-rownames(covid_confirm)
-
-
-node_geo
-node_confirms
+write(node_confirm,file="./data/Nodes/Confirm.csv")
+write(node_deadnum,file="./data/Nodes/Death.csv")
+write(node_recover,file="./data/Nodes/Recover.csv")
 
 ```
 
+```{r source-populations}
+pop_dat
+
+# rectify some names
+pop_dat$country[39]<-"Cabo Verde"
+pop_dat$country[49]<-"Congo (Brazzaville)"
+pop_dat$country[55]<-"Czechia"
+pop_dat$country[71]<-"Fiji"
+pop_dat$country[94]<-"Holy See"
+pop_dat$country[120]<-"Libya"
+pop_dat$country[178]<-"Russia"
+pop_dat$country[200]<-"Korea, South"
+pop_dat$country[203]<-"Sri Lanka"
+pop_dat$country[228]<-"US"
+
+
+
+
+node_info<-read.csv("./data/Nodes/node_info.csv",stringsAsFactors = F)
+node_geo<-read.csv("./data/Nodes/node_geo.csv",stringsAsFactors = F)
+node_geo<-select(node_geo,-c("X"))
+
+node_info<-select(node_info,-c("X"))
+head(node_info)
+node_info_pop<-left_join(node_info,pop_dat,by=c("Country.Region"="country"))
+group_by(node_info_pop,Node)%>%summarise(pop_total=sum(as.numeric(population),na.rm = T))->node_pop
+
+node_geo<-left_join(node_geo,node_pop,by="Node")
+write.csv(node_geo,file="./data/Nodes/node_geo.csv")
+
+node_info_pop$Country.Region[is.na(node_info_pop$population)]
+```
 

@@ -371,14 +371,11 @@ ExtractStrengthFeature<-function(dat, pop){
   return(dat_features)
 }
 
-
-
-
-
 ```
 
 
 ```{r}
+getwd() %>% paste0("/data/")->path
 files=dir(path)
 covid = files[grep("[0-9]?covid\\s?",files)]
 ReadCovid<-function(fname){
@@ -400,7 +397,7 @@ rownames(covid_demo)<-rownames(covid_recover)
 head(covid_demo)
 ```
 
-```{r get-population}
+```{r get-population, message=FALSE}
 library(rjson)
 library(jsonlite)
 
