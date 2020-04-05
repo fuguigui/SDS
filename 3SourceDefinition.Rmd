@@ -1,0 +1,234 @@
+---
+title: "3SourceDefinition"
+author: "Guirong Fu"
+date: "April 5, 2020"
+output: html_document
+---
+
+Solve the source definition problem
+
+- [ ] map countries to source/target nodes
+- [ ] map countries' information to source/targets' information.
+
+```{r setup}
+rm(list=ls())
+library(dplyr)
+```
+
+
+```{r read_data, message=FALSE}
+#who_regions = read.csv("./data/who_covid_19.csv")
+geo_info = read.csv("./data/csse_geo.csv",stringsAsFactors = FALSE)
+#head(who_regions)
+#attach(who_regions)
+#who_regions %>% select(Country.Region,WHO.region)%>% unique %>% dplyr::filter(WHO.region!="")->who_regions
+#who_regions
+geo_info %>% select(Country.Region, Lat, Long) -> geo_info
+geo_info %>% group_by(Country.Region) %>% summarise(lat= mean(as.numeric(Lat)),long = mean(as.numeric(Long)))->geo_info_mean
+
+#setdiff(who_regions$Country.Region, geo_info_mean$Country.Region)
+#sort(geo_info_mean$Country.Region)
+#sort(geo_info$Country.Region)
+
+#euro_geo<-filter(geo_info_mean,Country.Region %in% c("Russia","Ireland","Spain","Poland"))
+euro_geo<-filter(geo_info_mean, lat > 20 & lat<60 & long > -10 & long < 90)
+euro_geo
+```
+
+```{r target-nodes}
+node_it<-c("Italy","San Marino","Holy See")
+node_de<-c("Germany","Austria","Liechtenstein","Switzerland")
+node_ru<-c("Russia")
+node_ja<-c("Japan")
+node_ko<-c("Korea, South")
+node_hi<-c("India")
+```
+
+
+```{r source-nodes}
+
+# Europe 
+europe1<-c("Portugal","Spain","Malta")
+europe2<-c("France","Belgium","Netherlands","Luxembourg","Andorra","Monaco")
+europe3<-c("United Kingdom","Ireland")
+europe4<-c("Denmark","Sweden","Norway","Finland","Iceland")
+# 中欧：波兰，捷克，斯洛伐克，匈牙利，斯洛文尼亚
+europe5<-c("Poland","Czechia","Slovakia","Hungary","Slovenia")
+# 南欧：克罗地亚，波黑，黑山，阿尔巴尼亚，马其顿，塞尔维亚，罗马尼亚，保加利亚，希腊
+europe6<-c("Croatia","Bosnia and Herzegovina","Montenegro","Albania","Serbia","Romania","Bulgaria", "Greece","Kosovo","North Macedonia")
+# 东欧：爱沙尼亚、拉脱维亚、立陶宛、白俄罗斯、乌克兰、摩尔多瓦
+europe7<-c("Estonia","Latvia","Lithuania","Belarus","Moldova","Ukraine")
+europe<-c(europe1,europe2,europe3,europe4,europe5,europe6,europe7,node_de,node_it)
+
+
+# Asia
+# 西亚：伊朗、伊拉克、阿塞拜疆、格鲁吉亚、亚美尼亚、土耳其、叙利亚、约旦、以色列、巴勒斯坦、沙特阿拉伯、巴林、卡塔尔、也门、阿曼、阿拉伯联合酋长国、科威特、黎巴嫩、塞浦路斯、阿富汗
+# 没有：巴勒斯坦，也门, totally 18
+filter(geo_info_mean,long<76 & long>26 & lat<44 & lat>13)%>% select(Country.Region)->asia_west
+asia10<-setdiff(asia_west$Country.Region,europe)
+asia1_except<-c("Egypt","Eritrea","West Bank and Gaza","Uzbekistan","Kyrgyzstan","Pakistan")
+asia1<-setdiff(asia10,asia1_except)
+#asia1<-c("Palestine",asia1)
+# 中亚：哈萨克斯坦、吉尔吉斯斯坦、塔吉克斯坦、乌兹别克斯坦、土库曼斯坦
+# No: Tajikistan, Turkmenistan
+filter(geo_info_mean,long<80 & long>50 & lat<55 & lat>35)%>% select(Country.Region)->asia_cent
+asia2<-asia_cent$Country.Region
+# 南亚：尼泊尔、不丹、巴基斯坦、孟加拉、斯里兰卡、马尔代夫
+# No: Bengal,
+filter(geo_info_mean,long<100 & long>59 & lat<43 & lat>0)%>% select(Country.Region)->asia_south
+#asia_south
+asia3<-c("Nepal","Bhutan","Pakistan","Sri Lanka","Maldives","Bangladesh")
+asia4<-c("China","Mongolia","Taiwan*" )
+# 东南亚：越南、老挝、柬埔寨、泰国、缅甸、马来西亚、新加坡、印度尼西亚、文莱、菲律宾、东帝汶
+# ! Myanmar-> Burma 
+filter(geo_info_mean,long<140 & long>92 & lat<23 & lat>-10)%>% select(Country.Region)->asia_es
+asia5<-asia_es$Country.Region
+
+# American
+# 北美洲：加拿大，墨西哥，美国
+amer1<-c("Canada", "Mexico","US")
+# 中美洲：危地马拉、洪都拉斯、萨尔瓦多、尼加拉瓜、哥斯达黎加、巴拿马、古巴、海地、多米尼克、牙买加、特立尼达和多巴哥、巴巴多斯、格林纳达、圣卢西亚、圣文森特和格林纳丁斯、巴哈马、圣基茨和尼维斯、伯利兹
+# !: 萨尔瓦多 Salvador->El Salvador
+filter(geo_info_mean,long< -59 & long> -105 & lat<31 & lat>8)%>% select(Country.Region)->am_cent
+#am_cent
+amer2<-setdiff(am_cent$Country.Region,c("Mexico"))
+# 南美洲：圭亚那、苏里南、委内瑞拉、哥伦比亚、巴西、厄瓜多尔、秘鲁、玻利维亚、智利、阿根廷、巴拉圭、乌拉圭、安提瓜、巴布达
+filter(geo_info_mean,long< -34 & long> -81 & lat<12 & lat> -54)%>% select(Country.Region)->am_south
+amer3<-am_south$Country.Region
+
+# Africa
+# - 北非：埃及、苏丹、利比亚、突尼斯、阿尔及利亚、摩洛哥、亚速尔群岛、马德拉群岛
+filter(geo_info_mean,long< 36 & long> -16 & lat<37 & lat>19)%>% select(Country.Region)->af_north
+af1<-setdiff(af_north$Country.Region,asia1)
+af1<-setdiff(af1,europe)
+af1<-c("Suda",af1)
+# 非洲其他地方
+filter(geo_info_mean,long< 51 & long> -17 & lat<40 & lat>-35)%>% select(Country.Region)->af_all
+#af_all
+af2<-setdiff(af_all$Country.Region,asia1)
+af2<-setdiff(af2,europe)
+af2<-setdiff(af2,af1)
+af2<-c("Cabo Verde","Mauritius","Seychelles", af2)
+#af2
+
+
+# Australia
+filter(geo_info_mean,(long> 114 | long< -124) & lat<25 & lat>-51)%>% select(Country.Region)->au_all
+#au_all
+au<-c("Australia","New Zealand","Papua New Guinea","Fiji")
+
+#geo_info_mean[geo_info_mean$Country.Region=="Samoa",]
+#geo_info[geo_info$Country.Region=="Portugal",]
+#?sort
+#sort(unique(geo_info$Country.Region),decreasing = TRUE)
+```
+
+
+```{r}
+
+geo_info_mean$Node=""
+geo_info_mean$Node[geo_info_mean$Country.Region%in% node_de]="De"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% node_it]="It"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% node_ru]="Ru"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% node_ko]="Ko"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% node_ja]="Ja"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% node_hi]="Hi"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% europe1]="Eu1"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% europe2]="Eu2"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% europe3]="Eu3"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% europe4]="Eu4"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% europe5]="Eu5"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% europe6]="Eu6"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% europe7]="Eu7"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% asia1]="As1"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% asia2]="As2"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% asia3]="As3"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% asia4]="As4"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% asia5]="As5"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% amer1]="Am1"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% amer2]="Am2"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% amer3]="Am3"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% af1]="Af1"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% af2]="Af2"
+geo_info_mean$Node[geo_info_mean$Country.Region%in% au]="Au"
+write.csv(geo_info_mean,file="./data/node_member.csv")
+```
+
+```{r}
+#filter(geo_info,Country.Region=="Denmark" )
+# United Kingdom, France, Australia, Netherlands, Denmark
+
+geo_info_mean[geo_info_mean$Country.Region=="United Kingdom",c("lat","long")]<-c(55.3781,-3.4360)
+geo_info_mean[geo_info_mean$Country.Region=="France",c("lat","long")]<-c(46.2276,2.2137)
+geo_info_mean[geo_info_mean$Country.Region=="Netherlands",c("lat","long")]<-c(52.1326,5.2913)
+
+
+geo_info_mean%>% group_by(Node)%>%summarise(lat=mean(lat),long=mean(long))->node_geo
+#node_geo
+node_info<-left_join(geo_info_mean,node_geo,by="Node")
+
+write.csv(node_info,file="./data/node_info.csv")
+```
+
+
+```{r}
+
+getwd() %>% paste0("/data/")->path
+files=dir(path)
+covid = files[grep("[0-9]?covid\\s?",files)]
+ReadCovid<-function(fname){
+  #covid1<-as.data.frame(t(read.csv(paste0(path,fname),header = F, stringsAsFactors = F)),stringsAsFactors = F)
+  covid1<-read.csv(paste0(path,fname),header = T, stringsAsFactors = F)
+  c_names_tbl<-table(covid1$Country.Region)
+  c_names_easy<-names(c_names_tbl)[c_names_tbl<2]
+  c_names_hard<-setdiff(names(c_names_tbl),c_names_easy)
+  covid1_easy<-filter(covid1,Country.Region%in% c_names_easy)
+  covid1_hard<-filter(covid1,Country.Region%in% c_names_hard)
+  
+  for(c in c_names_hard){
+    filter(covid1_hard,Country.Region==c) %>% select(-c("Province.State","Country.Region","Lat","Long"))%>% as.matrix -> c_subs
+    c_subs = apply(c_subs, 2, as.numeric)
+    apply(c_subs,MARGIN=2,FUN=sum)->new_sub_line
+    new_line<-filter(covid1_hard,Country.Region==c)[1,]
+    new_line[5:ncol(new_line)]<-new_sub_line
+    
+    covid1_easy<-rbind(covid1_easy,new_line) 
+  }
+  covid1<-t(select(covid1_easy,-c("Province.State","Country.Region","Lat","Long")))
+  
+  colnames(covid1)<-covid1_easy$Country.Region
+  return(covid1)
+}
+
+covid_confirm<-ReadCovid(covid[1])
+covid_deadnum<-ReadCovid(covid[2])
+covid_recover<-ReadCovid(covid[3])
+
+node_name="Af2"
+NodeData<-function(dat,name,node_file){
+  node_file%>% filter(Node==name)%>%select(Country.Region)->countries
+  c_names<-intersect(countries$Country.Region,colnames(dat))
+  children = as.matrix(select(dat,c_names) )
+  children = apply(children, 2, as.numeric)
+  apply(children,MARGIN=1,FUN=sum)
+}
+
+NodeData(covid_confirm,node_name,node_info)
+node_names<-node_geo$Node
+
+node_confirms<-c()
+for(n in node_names){
+  confirm<-NodeData(covid_confirm,n,node_info)
+  node_confirms<-cbind(node_confirms,confirm)
+}
+
+colnames(node_confirms)<-node_names
+rownames(node_confirms)<-rownames(covid_confirm)
+
+
+node_geo
+node_confirms
+
+```
+
+
