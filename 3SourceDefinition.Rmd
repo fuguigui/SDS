@@ -7,8 +7,8 @@ output: html_document
 
 Solve the source definition problem
 
-- [ ] map countries to source/target nodes
-- [ ] map countries' information to source/targets' information.
+- [x] map countries to source/target nodes
+- [x] map countries' information to source/targets' information.
 
 ```{r setup}
 rm(list=ls())
@@ -31,8 +31,6 @@ geo_info %>% group_by(Country.Region) %>% summarise(lat= mean(as.numeric(Lat)),l
 #sort(geo_info$Country.Region)
 
 #euro_geo<-filter(geo_info_mean,Country.Region %in% c("Russia","Ireland","Spain","Poland"))
-euro_geo<-filter(geo_info_mean, lat > 20 & lat<60 & long > -10 & long < 90)
-euro_geo
 ```
 
 ```{r target-nodes}
@@ -154,6 +152,19 @@ geo_info_mean$Node[geo_info_mean$Country.Region%in% au]="Au"
 write.csv(geo_info_mean,file="./data/Nodes/node_member.csv")
 ```
 
+
+```{r edgelist}
+library(igraph)
+
+elist<-c("Af1","Af2","Af1","As1","Af1","Eu1","Af1","Eu6", "Af1","It","Am1","Am2","Am1","Eu4","Am1","Ru","Am2","Am3","As1","As2","As1","Eu6","As2","As3","As2","As4","As2","Ru","As3","As4","As3","Hi","As4","As5","As4","Hi","As4","Ja","As4","Ko","As4","Ru","As5","Au","As5","Hi","De","Eu2","De","Eu4","De","Eu5","Eu1","Eu2","Eu2","Eu3","Eu2","It","Eu4","Eu5","Eu4","Eu7","Eu5","Eu6","Eu5","Eu7","Eu6","Eu7","Eu7","Ru","Ja","Ko")
+edge_list<-matrix(elist,ncol=2)
+g<-graph(elist,directed = F)
+plot(g)
+V(g)
+spath<-shortest.paths(g)
+write.csv(spath,file = "./data/Nodes/shortest_path.csv")
+```
+
 ```{r node-geo-lat-long}
 #filter(geo_info,Country.Region=="Denmark" )
 # United Kingdom, France, Australia, Netherlands, Denmark
@@ -165,17 +176,10 @@ geo_info_mean[geo_info_mean$Country.Region=="Netherlands",c("lat","long")]<-c(52
 
 geo_info_mean%>% group_by(Node)%>%summarise(lat=mean(lat),long=mean(long))->node_geo
 #node_geo
-node_info<-left_join(geo_info_mean,node_geo,by="Node")
+#node_info<-left_join(node_geo,geo_info_mean,by="Node")
 
-write.csv(node_geo,file="./data/Nodes/node_geo.csv")
-write.csv(node_info,file="./data/Nodes/node_info.csv")
-```
-
-```{r edgelist}
-
-edgelist<-c("Af1","Af2","Af1","As1","Af1","")
-
-
+#write.csv(node_geo,file="./data/Nodes/node_geo.csv")
+#write.csv(node_info,file="./data/Nodes/node_member_info.csv")
 ```
 
 ```{r covid-from-country-to-node}
@@ -238,18 +242,24 @@ covid_deadnum<-ReadCovid(covid[2])
 covid_recover<-ReadCovid(covid[3])
 
 
-node_confirm<-AllCountryToNode(covid_confirm,node_geo$Node,node_info)
-node_deadnum<-AllCountryToNode(covid_deadnum,node_geo$Node,node_info)
-node_recover<-AllCountryToNode(covid_recover,node_geo$Node,node_info)
-
-write(node_confirm,file="./data/Nodes/Confirm.csv")
-write(node_deadnum,file="./data/Nodes/Death.csv")
-write(node_recover,file="./data/Nodes/Recover.csv")
+node_confirm<-AllCountryToNode(covid_confirm,node_geo$Node,geo_info_mean)
+#node_confirm<-AllCountryToNode(covid_confirm,node_geo$Node,geo_info_mean)
+node_deadnum<-AllCountryToNode(covid_deadnum,node_geo$Node,geo_info_mean)
+node_recover<-AllCountryToNode(covid_recover,node_geo$Node,geo_info_mean)
+#node_confirm
+write.csv(node_confirm,file="./data/Nodes/Confirm.csv")
+write.csv(node_deadnum,file="./data/Nodes/Death.csv")
+write.csv(node_recover,file="./data/Nodes/Recover.csv")
 
 ```
 
 ```{r source-populations}
-pop_dat
+library(rjson)
+library(jsonlite)
+
+#pop_json<-jsonlite::stream_in(file(paste0(path,"world_population.json")),pagesize = 500)
+pop_dat<-fromJSON(paste0(readLines(paste0(path,"world_population.json"))))
+#pop_dat
 
 # rectify some names
 pop_dat$country[39]<-"Cabo Verde"
@@ -266,18 +276,52 @@ pop_dat$country[228]<-"US"
 
 
 
-node_info<-read.csv("./data/Nodes/node_info.csv",stringsAsFactors = F)
-node_geo<-read.csv("./data/Nodes/node_geo.csv",stringsAsFactors = F)
-node_geo<-select(node_geo,-c("X"))
+#node_info<-read.csv("./data/Nodes/node_info.csv",stringsAsFactors = F)
+#node_geo<-read.csv("./data/Nodes/node_geo.csv",stringsAsFactors = F)
+#node_geo<-select(node_geo,-c("X"))
+#node_info<-select(node_info,-c("X"))
 
-node_info<-select(node_info,-c("X"))
-head(node_info)
-node_info_pop<-left_join(node_info,pop_dat,by=c("Country.Region"="country"))
+#head(geo_info_mean)
+node_info_pop<-left_join(geo_info_mean,pop_dat,by=c("Country.Region"="country"))
 group_by(node_info_pop,Node)%>%summarise(pop_total=sum(as.numeric(population),na.rm = T))->node_pop
 
+head(node_pop)
 node_geo<-left_join(node_geo,node_pop,by="Node")
+head(node_geo)
 write.csv(node_geo,file="./data/Nodes/node_geo.csv")
 
-node_info_pop$Country.Region[is.na(node_info_pop$population)]
+#node_info_pop$Country.Region[is.na(node_info_pop$population)]
+
 ```
 
+```{r}
+nid="As4"
+
+covid_demo<-data.frame(confirm=as.data.frame(node_confirm)[nid],
+                       recover=as.data.frame(node_recover)[nid],
+                       death=as.data.frame(node_deadnum)[nid])
+colnames(covid_demo)<-c("confirm","recover","death")
+pop_demo<-node_geo$pop_total[node_geo$Node==nid]
+
+features_demo<-ExtractStrengthFeature(covid_demo,pop_demo)
+head(features_demo)
+write.csv(features_demo,file = paste0("./data/Nodes/features/",nid,".csv"))
+#features_demo[30:40,]
+
+CreateFeatureFile<-function(nids,confirms,recovers,deaths,pops){
+  for(nid in nids){
+    covid_demo<-data.frame(confirm=as.data.frame(confirms)[nid],
+                       recover=as.data.frame(recovers)[nid],
+                       death=as.data.frame(deaths)[nid])
+    colnames(covid_demo)<-c("confirm","recover","death")
+    pop_demo<-pops$pop_total[pops$Node==nid]
+    
+    features_demo<-ExtractStrengthFeature(covid_demo,pop_demo)
+    head(features_demo)
+    write.csv(features_demo,file = paste0("./data/Nodes/features/",nid,".csv"))
+  }
+}
+
+CreateFeatureFile(node_geo$Node,node_confirm,node_recover,node_deadnum,node_geo)
+
+```

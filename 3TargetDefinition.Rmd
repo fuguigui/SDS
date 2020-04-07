@@ -1,0 +1,38 @@
+---
+title: "3TargetDefinition"
+author: "Guirong Fu"
+date: "April 5, 2020"
+output: html_document
+---
+
+```{r setup}
+rm(list=ls())
+```
+
+
+```{r}
+LanguageTweetImpact<-function(lang_zone){
+  getwd() %>% paste0("/data/")->path
+  lfiles = dir(paste0(path,lang_zone))
+  amounts<-rep(0,length(lfiles))
+  i=1
+  for(fname in lfiles){
+    load(paste0(path,lang_zone,fname))
+    amounts[i]<-nrow(tweets)
+    i = i+1
+  }
+  amounts
+}
+
+itamount<-LanguageTweetImpact("it/")
+deamount<-LanguageTweetImpact("de/")
+koamount<-LanguageTweetImpact("ko/")
+ruamount<-LanguageTweetImpact("ru/")
+jaamount<-LanguageTweetImpact("ja/")
+hiamount<-LanguageTweetImpact("hi/")
+
+dates<-gsub("[^0-9]","",itfiles)
+amount<-data.frame(it=itamount,de=deamount,ko=koamount,ru=ruamount,ja=jaamount,hi = hiamount)
+rownames(amount)<-dates
+write.csv(amount,file = "./data/0405TweetsStatistics.csv")
+```
