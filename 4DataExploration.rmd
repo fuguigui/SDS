@@ -1,0 +1,94 @@
+---
+title: "4DataExploration"
+author: "Guirong Fu"
+date: "April 10, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+rm(list=ls())
+library(dplyr)
+library(glmnet)
+```
+
+```{r}
+path_s<-paste0(getwd(),"/data/Nodes/features/")
+files_s<-dir(path_s)
+it = read.csv(paste0(path_s,files_s[21]),stringsAsFactors = F)
+target = read.csv(paste0(getwd(),"/data/0415TweetsStatistics.csv"))
+#data = it[18:nrow(it),2:ncol(it)] # 2.8
+data = it[19:nrow(it),2:ncol(it)] # 2.9
+y=target$it # 02.09
+if(length(y)>nrow(data)){
+  y = y[1:nrow(data)]
+}
+
+
+data <- as.matrix(data)
+X_sd<-scale(data)
+fit1<-cv.glmnet(X_sd,y,type.measure = "mse",family="gaussian")
+plot(fit1)
+plot(fit1$glmnet.fit)
+```
+
+```{r}
+fit1_coef<-coef(fit1,s=fit1$lambda.1se)
+fit1_coef
+y_pred<-predict(fit1,X_sd) 
+plot(y,type = "l")
+lines(y_pred,col=2)
+sqrt(mean((y-y_pred)^2))
+```
+
+```{r}
+X_id = which(fit1_coef!=0)
+X_act = colnames(X_sd)[X_id]
+X_act
+pvalue=rep(0,ncol(X_sd))
+cors = rep(0,ncol(X_sd))
+for(i in 1:ncol(X_sd)){
+  sumry = cor.test(X_sd[,i],y)
+  pvalue[i]=sumry$p.value
+  cors[i]=sumry$estimate
+}
+X_id2 = which(pvalue<0.05)
+X_act2 = colnames(X_sd)[X_id2]
+X_act2
+
+cors[X_id2]
+X_act
+fit1_coef[X_id]
+```
+
+```{r compare}
+lm1<-lm(y~X_sd[,X_id])
+summary(lm1)
+lm2<-lm(y~X_sd[,X_id2])
+summary(lm2)
+```
+```{r compare-predict}
+y1<-lm1$fitted.values
+y2<-lm2$fitted.values
+plot(y,type="l")
+lines(y1,col=2)
+lines(y2,col=3)
+lines(y_pred,col=4)
+
+```
+```{r}
+lm3<-lm(y~X_sd[,c("confirm","DeathR")])
+y3<-lm3$fitted.values
+summary(lm3)
+plot(y,type="l")
+lines(y3,col=2)
+
+
+mse0 = sqrt(mean((y-y_pred)^2))
+mse1 = sqrt(mean((y-y1)^2))
+mse2 = sqrt(mean((y-y2)^2))
+mse3 = sqrt(mean((y-y3)^2))
+
+c(mse0,mse1,mse2,mse3)
+```
+
+

@@ -1,0 +1,154 @@
+---
+title: "3DataCheck"
+author: "Guirong Fu"
+date: "April 14, 2020"
+output: html_document
+---
+```{r}
+rm(list=ls())
+library(dplyr)
+library(reshape2)
+library(ggplot2)
+
+```
+
+
+## Newkeyword en
+
+```{r}
+getwd() %>% paste0("/data/")->path
+files = dir(path)
+keyword_files = files[grep("Keyword\\s?",files)]
+path_new = paste0(path,"/",keyword_files[1],"/")
+new_en = dir(path_new)
+new_en
+```
+
+```{r}
+load(paste0(path_new,new_en[26]))
+old_tweets = tweets
+load(paste0(path_new,new_en[2]))
+old_tweets<-rbind(old_tweets,tweets)
+tweets<-rbind(tweets,old_tweets)
+tweets<-old_tweets
+
+fname = paste0(path_new,"/Tweet0316en.RData")
+save(tweets,file=fname)
+
+old_tweets$created_at[nrow(old_tweets)]
+tweets$created_at[1]
+tweets$created_at[nrow(tweets)]
+ExtractHours<-function(tm){
+  t<-as.POSIXlt(tm)
+  t$hour
+}
+
+hours<-sapply(tweets$created_at,ExtractHours)
+data.frame(hour=hours,retweet=tweets$is_retweet) %>% group_by(hour)%>%summarise(cnt=sum(retweet),ttl=n())->twit_stat
+
+twit_plot<-melt(twit_stat,id="hour")
+ggplot(twit_plot, aes(fill=variable, y=value, x=hour)) + 
+  geom_bar(position = 'dodge', stat="identity")+labs(title=fname)
+
+t = as.POSIXct("2020-03-14 12:00:00",tz="UTC")
+times = sapply(tweets$created_at, as.POSIXct)
+idx = times>as.numeric(t)
+tweets = tweets[idx,]
+sum(idx)
+as.numeric(t)
+```
+
+Issues:
+
+- "2020-03-12 13:45:04 UTC"
+- "2020-03-15 16:00:01 UTC"
+- "2020-03-16 20:20:07 UTC"
+- "2020-03-17 22:14:40 UTC"
+
+## Oldkeyword en
+
+```{r}
+path_old = paste0(path,keyword_files[3])
+old_en = dir(path_old)
+old_en
+
+```
+
+```{r}
+load(paste0(path_old,"/",old_en[36]))
+old_tweets$created_at[1]
+old_tweets$created_at[nrow(old_tweets)]
+tweets$created_at[1]
+tweets$created_at[nrow(tweets)]
+
+
+old_tweets = tweets
+old_tweets<-rbind(old_tweets,tweets)
+
+tweets<-rbind(tweets,old_tweets)
+tweets<-old_tweets
+
+fname = paste0(path,"Tweet0405en.RData")
+save(tweets,file=fname)
+
+t = as.POSIXct("2020-03-31 12:00:00",tz="UTC")
+times = sapply(tweets$created_at, as.POSIXct)
+idx = times>as.numeric(t)
+tweets = tweets[idx,]
+sum(idx)
+as.numeric(t)
+
+```
+
+Issues:
+
+- "2020-03-10 17:01:32 UTC"
+- "2020-03-11 16:11:35 UTC"
+- "2020-03-12 13:44:00 UTC"
+- "2020-03-13 23:59:59 UTC"
+- "2020-03-14 16:11:37 UTC" "2020-03-14 22:20:47 UTC"
+- "2020-03-15 18:35:58 UTC"
+- "2020-03-16 16:24:07 UTC"
+- "2020-03-17 22:11:38 UTC"
+- "2020-03-18 22:41:56 UTC"
+- "2020-03-19 19:37:01 UTC"
+- "2020-03-20 15:34:13 UTC"
+- "2020-03-21 14:23:02 UTC"
+- "2020-03-22 16:27:22 UTC"
+- "2020-03-23 15:42:26 UTC"
+- "2020-03-24 12:14:03 UTC"
+- "2020-03-25 18:44:21 UTC"
+- "2020-03-26 16:59:49 UTC"
+- "2020-03-27 16:24:15 UTC"
+- "2020-04-02 15:44:12 UTC"
+- "2020-04-05 13:44:16 UTC"
+- "2020-04-06 23:11:26 UTC"
+
+## Countries
+
+```{r}
+path_old_c = paste0(path,keyword_files[4],"/ko/")
+files_old_c = dir(path_old_c)
+files_old_c
+```
+```{r}
+load(paste0(path_old_c,files_old_c[24]))
+#old_tweets$created_at[1]
+#old_tweets$created_at[nrow(old_tweets)]
+tweets$created_at[1]
+tweets$created_at[nrow(tweets)]
+
+
+#old_tweets = tweets
+#old_tweets<-rbind(old_tweets,tweets)
+
+#tweets<-rbind(tweets,old_tweets)
+#tweets<-old_tweets
+
+#fname = paste0(path,"it/Tweet0330it.RData")
+#save(tweets,file=fname)
+```
+
+
+Issues:
+- old it: "2020-04-03 21:35:33 UTC"
