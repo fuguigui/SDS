@@ -239,6 +239,8 @@ Hashtags: #COVID2019 OR #coronavirus
 
 
 
+[zoom](https://www.epidemicdatathon.com/data)
+
 - immediacy 
 
   - center-distance geology
@@ -269,15 +271,21 @@ Guirong's TODO:
 
 Target/source:
 
-de: 德国，奥地利，列支敦士登，瑞士（加权） 省略： 比利时，卢森堡
+de: 德国，奥地利，列支敦士登，瑞士（加权） 
+
+省略： 比利时，卢森堡
 
 hi：印度
 
-it：意大利，圣马力诺，梵蒂冈。瑞士（加权）
+it：意大利，圣马力诺。梵蒂冈。瑞士（加权）
+
+https://zhidao.baidu.com/question/1866620564563264227.html
+
+瑞士讲意大利语6.6%，忽略不计？？？
 
 ja：日本
 
-ko：韩国
+ko：韩国。
 
 ru：俄罗斯
 
@@ -290,7 +298,7 @@ ru：俄罗斯
 - 西班牙，葡萄牙
 - 法国，比利时，荷兰
 - 英国，爱尔兰
-- 北斗：丹麦，瑞典，挪威，芬兰
+- 北欧：丹麦，瑞典，挪威，芬兰
 - 中欧：波兰，捷克，斯洛伐克，匈牙利，斯洛文尼亚
 - 南欧：克罗地亚，波黑，黑山，阿尔巴尼亚，马其顿，塞尔维亚，罗马尼亚，保加利亚，希腊
 - 东欧：爱沙尼亚、拉脱维亚、立陶宛、白俄罗斯、乌克兰、摩尔多瓦
@@ -301,15 +309,13 @@ ru：俄罗斯
 
 [sohu](https://www.sohu.com/a/214525334_794891)
 
-- 西亚：伊朗、伊拉克、阿塞拜疆、格鲁吉亚、亚美尼亚、
-
-  土耳其、叙利亚、约旦、以色列、巴勒斯坦、沙特阿拉伯、巴林、卡塔尔、也门、阿曼、阿拉伯联合酋长国、科威特、黎巴嫩、塞浦路斯、阿富汗
+- 西亚：伊朗、伊拉克、阿塞拜疆、格鲁吉亚、亚美尼亚、土耳其、叙利亚、约旦、以色列、巴勒斯坦、沙特阿拉伯、巴林、卡塔尔、也门、阿曼、阿拉伯联合酋长国、科威特、黎巴嫩、塞浦路斯、阿富汗
 
 - 中亚：哈萨克斯坦、吉尔吉斯斯坦、塔吉克斯坦、乌兹别克斯坦、土库曼斯坦
 
 - 南亚：尼泊尔、不丹、巴基斯坦、孟加拉、斯里兰卡、马尔代夫
 
-- 蒙古（东亚）
+- 东亚：蒙古，中国。
 
 - 东南亚：越南、老挝、柬埔寨、泰国、缅甸、马来西亚、新加坡、印度尼西亚、文莱、菲律宾、东帝汶
 
@@ -335,3 +341,118 @@ ru：俄罗斯
 
 - the length of the shortest path （yes）
 - 邻接矩阵高次幂？？？从一个点到另一个点，初始化起始点为1，其余为0 （不是很好。）
+
+
+
+# 4-5 Meeting
+
+- [x] Solve the source definition problem
+  - [x] map countries to source/target nodes
+  - [x] map countries' information to source/targets' information.
+
+有一片小海也算相邻点
+
+## Nodes
+
+- it: "Italy","San Marino","Holy See"
+- de: "Germany","Austria","Liechtenstein","Switzerland"
+- ru: "Russia"
+- ja: "Japan"
+- ko: "Korea, South"
+- hi: "India"
+- eu1: "Portugal","Spain","Malta"
+- eu2: "France","Belgium","Netherlands", "Luxembourg", "Andorra", "Monaco"
+- eu3: "United Kingdom","Ireland"
+- eu4: 北欧
+- eu5: 中欧
+- eu6: 南欧
+- eu7: 东欧
+- as1: 西亚
+- as2: 中亚
+- as3: 南亚
+- as4: 东亚
+- as5: 东南亚
+- am1: 北美
+- am2: 中美
+- am3: 南美
+- af1: 北非
+- af2: 南非
+- au: 澳洲
+
+
+
+# 4-10
+
+## Report
+
+- abstract/introduction/motivation: 1-1.5
+- data retrieval: 
+  - google
+  - coronavirus
+  - source/target division. 
+  - twitter.
+- Data processing
+  - source/target
+  - strength
+  - immediacy
+  - impact
+- Analysis:
+  - Hypothesis
+  - one by one.
+  - (model)
+- Conclusion
+- Critique
+
+
+
+# 4-14
+
+## Issues
+
+### New En
+
+- "2020-03-12 13:45:04 UTC"
+- "2020-03-15 16:00:01 UTC"
+- "2020-03-16 20:20:07 UTC"
+- "2020-03-17 22:14:40 UTC"
+
+### New Countries
+
+none
+
+### Old En
+
+- "2020-03-10 17:01:32 UTC"
+- "2020-03-11 16:11:35 UTC"
+- "2020-03-12 13:44:00 UTC"
+
+- "2020-03-13 23:59:59 UTC"
+- "2020-03-14 16:11:37 UTC" "2020-03-14 22:20:47 UTC"
+- "2020-03-15 18:35:58 UTC"
+- "2020-03-16 16:24:07 UTC"
+- "2020-03-17 22:11:38 UTC"
+- "2020-03-18 22:41:56 UTC"
+- "2020-03-19 19:37:01 UTC"
+- "2020-03-20 15:34:13 UTC"
+- "2020-03-21 14:23:02 UTC"
+- "2020-03-22 16:27:22 UTC"
+- "2020-03-23 15:42:26 UTC"
+- "2020-03-24 12:14:03 UTC"
+- "2020-03-25 18:44:21 UTC"
+- "2020-03-26 16:59:49 UTC"
+- "2020-03-27 16:24:15 UTC"
+- "2020-04-02 15:44:12 UTC"
+- "2020-04-05 13:44:16 UTC"
+- "2020-04-06 23:11:26 UTC"
+
+### Old Countries
+
+- it: "2020-04-03 21:35:33 UTC"
+
+
+
+# 4-15
+
+## Twitter
+
+Italy: use one-day-later better than the same day.
