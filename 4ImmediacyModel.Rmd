@@ -127,12 +127,12 @@ test_targets = target_nodes
 test_sources = source_nodes
 
 # Read features
-for (target in test_targets){
-  varname = paste(target,"_target_feat",sep="")
-  target_feat = read.csv(paste("./Nodes/features/",target,".csv",sep=""))
-  target_feat = target_feat[-c(1:18),]
-  assign(varname,target_feat)
-}
+# for (target in test_targets){
+#   varname = paste(target,"_target_feat",sep="")
+#   target_feat = read.csv(paste("./Nodes/features/",target,".csv",sep=""))
+#   target_feat = target_feat[-c(1:18),]
+#   assign(varname,target_feat)
+# }
 
 for (source in test_sources){
   varname = paste(source,"_source_feat",sep="")
@@ -246,7 +246,7 @@ print(correlation)
 
 # Calculate coorelation between geodistance and above source-target-coorelations
 ```{r}
-## Geo distance
+## Option1: Geo distance
 # Inverse the distance, so that larger value coresponds to smaller distance, and larger impact idealy
 for (i in 1:nrow(geo_dist)){
   for (j in 1:ncol(geo_dist)){
@@ -267,7 +267,7 @@ for (target in test_targets){
   TargetDistCor = append(TargetDistCor,cor)
 }
 
-## Shorteset path
+## Option 2: Shorteset path
 short_paths <- read.csv("./Nodes/shortest_path.csv")
 pathDist <- short_paths[,c(source_nodes)]
 rownames(pathDist) = short_paths[,c("X")]
@@ -279,6 +279,7 @@ for (i in 1:nrow(pathDist)){
   }
 }
 
+## Calculate coorelations
 geo_dist = pathDist
 TargetDistCor = c()
 
@@ -307,16 +308,6 @@ positiveCors <- TargetDistCor[,TargetDistCor>0]
 print(positiveCors)
 ```
 
-# Next steps
-1 Result between source_feat & TwitterImpact has certain trends
-  - Change features definition
-  - Test with Google trend
-  
-2 Other coorelation functions
-
-```{r}
-
-```
 
 
 
