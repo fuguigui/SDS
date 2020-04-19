@@ -1,0 +1,321 @@
+---
+title: "R Notebook"
+author: "Haojun Cai"
+date: "17/4/2020"
+output: html_notebook
+---
+
+# Set the working directory
+Remeber to change the working directory.
+
+```{r setup, include=FALSE}
+# knitr::opts_knit$set(root.dir = "E:/5_Social Data Science/old_keyword")
+setwd("E:/5_Social Data Science/old_keyword")
+```
+
+# Read Google trend impact and Process the data
+```{r}
+library (gtrendsR)
+
+# Obtain data and save as lang+"_GoogleImpact"
+keyword = "coronavirus"
+countries = c("IN","KR","RU","JP","DE","IT")
+time = "today 3-m"
+
+for (country in countries){
+  trends = gtrends(keyword,geo=country,time=time)
+  time_trend = trends$interest_over_time
+  varname = paste(country,"_GoogleImpact",sep="")
+  assign(varname,time_trend)
+}
+
+# 1st: cut data and save as lang+"_CutGoogleImpact"
+for (country in countries){
+  dname = paste(country,"_GoogleImpact",sep="")
+  if(country=="IN") {varname = "Hi_CutGoogleImpact"}
+  else if(country=="KR") {varname = "Ko_CutGoogleImpact"}
+  else if(country=="JP") {varname = "Ja_CutGoogleImpact"}
+  else if(country=="RU") {varname = "Ru_CutGoogleImpact"}
+  else if(country=="DE") {varname = "De_CutGoogleImpact"}
+  else if(country=="IT") {varname = "It_CutGoogleImpact"}
+  
+  data = get(dname)
+  data = data[c(23:78),]
+  assign(varname,data)
+}
+
+# 2nd: deal with hits attribute
+tempdata = c()
+for (target in target_nodes){
+  dname = paste(target,"_CutGoogleImpact",sep="")
+  varname = paste(target,"GgImpact",sep="")
+  data = get(dname)
+  data = data$hits
+  for (i in 1:length(data)){
+    if (data[i]=="<1"){
+      tempdata[i]=0.5
+    } else{
+      tempdata[i]=as.numeric(data[i]) 
+    }
+  }
+  assign(varname,tempdata)
+}
+
+```
+
+# Read immediacy data: geolocation and shortest path
+```{r}
+
+short_paths <- read.csv("./Nodes/shortest_path.csv")
+node_geo <- read.csv("./Nodes/node_geo.csv")
+member <- read.csv("./Nodes/node_member.csv")
+
+source_nodes = c("Eu1","Eu2","Eu3","Eu4","Eu5","Eu6","Eu7","Au","As1","As2","As3","As4","As5","Am1","Am2","Am3","Af1","Af2")
+target_nodes = c("Hi","Ko","Ru","Ja","De","It")
+```
+
+# Read Tittwer impact
+```{r}
+library(readr)
+
+# Read the impact from two files and reformat them
+load("./impact.RData") 
+impact1 <- read.csv("./0405TweetsStatistics.csv")
+names(impact1)[1]<-paste("init_dates")
+impact1$init_dates = paste("0",c(impact1$init_dates),sep="")
+TwitterImpact <- rbind(impact1,impact)
+  
+```
+
+# Calculate distance matrix of geolocation
+```{r}
+
+geo_dist = c()
+
+for (i in 1:length(target_nodes)){
+  target = target_nodes[i]
+  target_dist = c()
+  lat = node_geo[node_geo$Node==target,]$lat
+  long = node_geo[node_geo$Node==target,]$long
+  target_loc = c(lat,long)
+  
+  for (source in source_nodes){
+    lat = node_geo[node_geo$Node==source,]$lat
+    long = node_geo[node_geo$Node==source,]$long
+    source_loc = c(lat,long) 
+    target_dist <- append(target_dist,dist(rbind(target_loc,source_loc)))
+  }
+  
+ geo_dist <- append(geo_dist,target_dist)
+}
+
+geo_dist_matrix <- matrix(geo_dist, ncol=length(source_nodes), byrow=TRUE)
+geo_dist <- as.data.frame(geo_dist_matrix, stringsAsFactors=FALSE)
+
+colnames(geo_dist) = source_nodes
+rownames(geo_dist) = target_nodes
+
+```
+
+# Read source features
+# Deal with data within 02.09 - 04.04 (features, impacts)
+```{r}
+
+# Change test_srouce and test_targets to test different variables
+test_targets = target_nodes
+test_sources = source_nodes
+
+# Read features
+for (target in test_targets){
+  varname = paste(target,"_target_feat",sep="")
+  target_feat = read.csv(paste("./Nodes/features/",target,".csv",sep=""))
+  target_feat = target_feat[-c(1:18),]
+  assign(varname,target_feat)
+}
+
+for (source in test_sources){
+  varname = paste(source,"_source_feat",sep="")
+  source_feat = read.csv(paste("./Nodes/features/",source,".csv",sep=""))
+  source_feat = source_feat[-c(1:18),]
+  assign(varname,source_feat)
+}
+
+TwitterImpact = TwitterImpact[-c(57:67),]
+
+```
+
+# Test the relevance btw immediacy and impact
+# Parameters to test: source weights, twitter impact, distance matrix
+```{r}
+# library(Hmisc)
+# rcorr(x, type="pearson") # type can be pearson or spearman
+
+# Calculate coorelation between source weights and Tiwtter impact
+# Calculate source weights
+for (target in test_targets){
+  dname = paste(target,"_target_feat",sep="")
+  varname = paste(target,"_weight",sep="")
+  target_feat = get(dname)
+  target_weight = target_feat$confirm*0.5+target_feat$death*0.3+target_feat$recover*0.2
+  assign(varname,target_weight)
+  # plot(source_weight)
+}
+
+# Calculate target weights
+for (source in test_sources){
+  dname = paste(source,"_source_feat",sep="")
+  varname = paste(source,"_weight",sep="")
+  source_feat = get(dname)
+  # source_weight = source_feat$confirm*0.5+source_feat$death*0.3+source_feat$recover*0.2
+  source_weight = source_feat$confirm
+  assign(varname,source_weight)
+  # plot(source_weight)
+}
+
+### Calculate correlations
+## Alternative1: Twitter impact
+cor = c()
+for (target in test_targets){
+  target = tolower(target)
+  
+  for (source in test_sources){
+    dname = paste(source,"_weight",sep="")
+    source_weight = get(dname)
+    targetcor = cor(source_weight,TwitterImpact[target])
+    cor = append(cor,targetcor)
+    # plot(source_weight, TwitterImpact$de, xlab="Features", ylab="Impacts")
+  }
+}
+
+## Alternative2: Google impact
+# 1st: cut data
+for (country in countries){
+  dname = paste(country,"_GoogleImpact",sep="")
+  if(country=="IN") {varname = "Hi_CutGoogleImpact"}
+  else if(country=="KR") {varname = "Ko_CutGoogleImpact"}
+  else if(country=="JP") {varname = "Ja_CutGoogleImpact"}
+  else if(country=="RU") {varname = "Ru_CutGoogleImpact"}
+  else if(country=="DE") {varname = "De_CutGoogleImpact"}
+  else if(country=="IT") {varname = "It_CutGoogleImpact"}
+  
+  data = get(dname)
+  data = data[c(23:78),]
+  assign(varname,data)
+}
+
+# 2nd: deal with hits attribute
+tempdata = c()
+for (target in target_nodes){
+  dname = paste(target,"_CutGoogleImpact",sep="")
+  varname = paste(target,"GgImpact",sep="")
+  data = get(dname)
+  data = data$hits
+  for (i in 1:length(data)){
+    if (data[i]=="<1"){
+      tempdata[i]=0.5
+    } else{
+      tempdata[i]=as.numeric(data[i]) 
+    }
+  }
+  assign(varname,tempdata)
+}
+
+# 3rd: calculate cor btw google impact
+cor = c()
+for (target in test_targets){
+  dname = paste(target,"GgImpact",sep="")
+  impact = get(dname)
+  
+  for (source in test_sources){
+    dname = paste(source,"_weight",sep="")
+    source_weight = get(dname)
+    targetcor = cor(source_weight,impact)
+    cor = append(cor,targetcor)
+    # plot(source_weight, TwitterImpact$de, xlab="Features", ylab="Impacts")
+  }
+}
+
+cor_matrix <- matrix(cor, ncol=length(source_nodes), byrow=TRUE)
+correlation <- as.data.frame(cor_matrix, stringsAsFactors=FALSE)
+colnames(correlation) = source_nodes
+rownames(correlation) = target_nodes
+print(correlation)
+```
+# With source weight increasing, impacts should increase. Thus, coefficient should be larger than 0. In this way, only Hi, Ru, De make sense.
+
+# Calculate coorelation between geodistance and above source-target-coorelations
+```{r}
+## Geo distance
+# Inverse the distance, so that larger value coresponds to smaller distance, and larger impact idealy
+for (i in 1:nrow(geo_dist)){
+  for (j in 1:ncol(geo_dist)){
+    geo_dist[i,j] = 1/geo_dist[i,j]
+  }
+}
+
+TargetDistCor = c()
+
+for (target in test_targets){
+  targetcor = correlation[c(target),]
+  targetdist = sort(geo_dist[c(target),])
+  sortcolnames <- colnames(targetdist)
+  targetcor <- targetcor[,sortcolnames] # Sort the coorelation based on descending distance
+  targetcor <- t(targetcor)
+  targetdist <- t(targetdist)
+  cor = cor(targetcor,targetdist)
+  TargetDistCor = append(TargetDistCor,cor)
+}
+
+## Shorteset path
+short_paths <- read.csv("./Nodes/shortest_path.csv")
+pathDist <- short_paths[,c(source_nodes)]
+rownames(pathDist) = short_paths[,c("X")]
+pathDist = pathDist[c(target_nodes),]
+
+for (i in 1:nrow(pathDist)){
+  for (j in 1:ncol(pathDist)){
+    if(pathDist[i,j]!=0) pathDist[i,j] = 1/pathDist[i,j]
+  }
+}
+
+geo_dist = pathDist
+TargetDistCor = c()
+
+for (target in test_targets){
+  targetcor = correlation[c(target),]
+  targetdist = sort(geo_dist[c(target),])
+  sortcolnames <- colnames(targetdist)
+  targetcor <- targetcor[,sortcolnames] # Sort the coorelation based on descending distance
+  targetcor <- t(targetcor)
+  targetdist <- t(targetdist)
+  cor = cor(targetcor,targetdist)
+  TargetDistCor = append(TargetDistCor,cor)
+}
+
+TargetDistCor_matrix <- matrix(TargetDistCor, ncol=length(target_nodes), byrow=TRUE)
+TargetDistCor <- as.data.frame(TargetDistCor_matrix, stringsAsFactors=FALSE)
+colnames(TargetDistCor) = target_nodes
+
+print(TargetDistCor)
+
+```
+
+# Explore the results
+```{r}
+positiveCors <- TargetDistCor[,TargetDistCor>0]
+print(positiveCors)
+```
+
+# Next steps
+1 Result between source_feat & TwitterImpact has certain trends
+  - Change features definition
+  - Test with Google trend
+  
+2 Other coorelation functions
+
+```{r}
+
+```
+
+
+
