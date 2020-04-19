@@ -29,7 +29,7 @@ for (country in countries){
   assign(varname,time_trend)
 }
 
-# 1st: cut data and save as lang+"_CutGoogleImpact"
+# 1st: cut data with specified dates and save as lang+"_CutGoogleImpact"
 for (country in countries){
   dname = paste(country,"_GoogleImpact",sep="")
   if(country=="IN") {varname = "Hi_CutGoogleImpact"}
@@ -40,11 +40,12 @@ for (country in countries){
   else if(country=="IT") {varname = "It_CutGoogleImpact"}
   
   data = get(dname)
-  data = data[c(23:78),]
+  data = data[c(23:78),] # cut the data
   assign(varname,data)
 }
 
 # 2nd: deal with hits attribute
+target_nodes = c("Hi","Ko","Ru","Ja","De","It")
 tempdata = c()
 for (target in target_nodes){
   dname = paste(target,"_CutGoogleImpact",sep="")
