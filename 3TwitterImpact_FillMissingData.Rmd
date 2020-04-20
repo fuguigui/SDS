@@ -65,7 +65,7 @@ To test on other datasets, change the variable 'init_dates'. Besides, packages '
 
 ```{r}
 it = c("it")
-init_dates = paste("0",c(311:331,401:415),sep="")
+init_dates = paste("0",c(311:331,401:418),sep="")
 values <- calImpactIt(it,init_dates)
 impactbyhour <- values$impactbyhour
 last_createdtime <- values$last_createdtime
@@ -95,4 +95,30 @@ lines(completeval2,col="green")
 lines(completeval3,col="blue")
 lines(completeval4,col="blue")
 ```
-It seems the data on date '0403' is an outlier according to the above figure.
+It seems the data on date '0403' is an outlier according to the above figure. Thus, mean values are chosen to fill in the missing data on the data 0403.
+```{r}
+end = ncol(data0401)
+data0401 = impactbyhour[which(init_dates=="0401"),2:end]
+data0402 = impactbyhour[which(init_dates=="0402"),2:end]
+data0404 = impactbyhour[which(init_dates=="0404"),2:end]
+data0405 = impactbyhour[which(init_dates=="0405"),2:end]
+data0403 = (data0401+data0402+data0404+data0405)/4
+
+data0401vec = as.numeric(t(data0401))
+data0402vec = as.numeric(t(data0402))
+data0403vec = as.numeric(t(data0403))
+data0404vec = as.numeric(t(data0404))
+data0405vec = as.numeric(t(data0405))
+
+plot(data0403vec,type="l",col="red")
+lines(data0401vec,col="green")
+lines(data0402vec,col="green")
+lines(data0404vec,col="blue")
+lines(data0405vec,col="blue")
+
+impactbyhour[which(init_dates=="0403"),2:end] = c(data0403vec)
+impact[which(init_dates=="0403"),"it"] = floor(sum(impactbyhour[which(init_dates=="0403"),2:end]))
+
+save(impact,file="0418TweetImpact_correctIt0403.RData")
+```
+
