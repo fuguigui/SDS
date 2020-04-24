@@ -12,30 +12,13 @@ library(glmnet)
 library(xgboost)
 library(Matrix)
 library(stringr)
+source("./lib/utils.R")
 ```
 
 ```{r, include=F}
 
-date_start = 18
-date_end = 87
-GetNeighData<-function(name, spath,nneigh,fs,path){
-  row = spath[spath$X==name,]
-  neighs = colnames(row)[row==nneigh]
-  i = 1
-  data_other=NULL
-  for(n in neighs){
-    neigh_name = fs[str_detect(fs,n)]
-    other = read.csv(paste0(path,neigh_name),stringsAsFactors = F)
-    if(i==1){
-      data_other = other[date_start:date_end,2:ncol(other)] # 2.8 - 4.5
-      i=2
-    }
-    else{
-      data_other = data_other + other[date_start:date_end,2:ncol(other)] # 2.8
-    }
-  }
-  return(data_other)
-}
+date_start = 18 # 2.8
+date_end = 90 # 4.20
 
 ```
 
@@ -81,7 +64,7 @@ barplot(plot_dat_ar$cor,names.arg=plot_dat_ar$name)
 
 ```{r, include=FALSE}
 x_de = de$confirm[date_start:date_end]
-y_de = target$de
+y_de = target$de # 2.9 - 4.21
 cor_de = cor.test(x_de,y_de)
 #cor.test(y_de,de$confirm[date_start:date_end])
 #cor.test(y_de[2:length(y_de)],y_de[1:(length(y_de)-1)])
@@ -120,24 +103,23 @@ write.csv(cor_report_0,file="./data/results/Confirm_twitter_self.csv")
 ### Neighbors
 
 ```{r, include=FALSE}
+dat_other_it_1<-GetNeighData("It",short_paths,1,files_s,path_s,date_start,date_end)
+cor_it = cor.test(dat_other_it_1$confirm,y_it)
 
-dat_other_it<-GetNeighData("It",short_paths,1,files_s,path_s)
-cor_it = cor.test(dat_other_it$confirm,y_it)
+dat_other_hi_1<-GetNeighData("Hi",short_paths,1,files_s,path_s,date_start,date_end)
+cor_hi = cor.test(dat_other_hi_1$confirm,y_hi)
 
-dat_other_hi<-GetNeighData("Hi",short_paths,1,files_s,path_s)
-cor_hi = cor.test(dat_other_hi$confirm,y_hi)
+dat_other_ja_1<-GetNeighData("Ja",short_paths,1,files_s,path_s,date_start,date_end)
+cor_ja = cor.test(dat_other_ja_1$confirm,y_ja)
 
-dat_other_ja<-GetNeighData("Ja",short_paths,1,files_s,path_s)
-cor_ja = cor.test(dat_other_ja$confirm,y_ja)
+dat_other_ko_1<-GetNeighData("Ko",short_paths,1,files_s,path_s,date_start,date_end)
+cor_ko = cor.test(dat_other_ko_1$confirm,y_ko)
 
-dat_other_ko<-GetNeighData("Ko",short_paths,1,files_s,path_s)
-cor_ko = cor.test(dat_other_ko$confirm,y_ko)
+dat_other_de_1<-GetNeighData("De",short_paths,1,files_s,path_s,date_start,date_end)
+cor_de = cor.test(dat_other_de_1$confirm,y_de)
 
-dat_other_de<-GetNeighData("De",short_paths,1,files_s,path_s)
-cor_de = cor.test(dat_other_de$confirm,y_de)
-
-dat_other_ru<-GetNeighData("Ru",short_paths,1,files_s,path_s)
-cor_ru = cor.test(dat_other_ru$confirm,y_ru)
+dat_other_ru_1<-GetNeighData("Ru",short_paths,1,files_s,path_s,date_start,date_end)
+cor_ru = cor.test(dat_other_ru_1$confirm,y_ru)
 
 
 
@@ -153,23 +135,23 @@ write.csv(cor_report_1,file="./data/results/Confirm_twitter_neighbour1.csv")
 ```
 
 ```{r, include=FALSE}
-dat_other_it<-GetNeighData("It",short_paths,2,files_s,path_s)
-cor_it = cor.test(dat_other_it$confirm,y_it)
+dat_other_it_2<-GetNeighData("It",short_paths,2,files_s,path_s,date_start,date_end)
+cor_it = cor.test(dat_other_it_2$confirm,y_it)
 
-dat_other_hi<-GetNeighData("Hi",short_paths,2,files_s,path_s)
-cor_hi = cor.test(dat_other_hi$confirm,y_hi)
+dat_other_hi_2<-GetNeighData("Hi",short_paths,2,files_s,path_s,date_start,date_end)
+cor_hi = cor.test(dat_other_hi_2$confirm,y_hi)
 
-dat_other_ja<-GetNeighData("Ja",short_paths,2,files_s,path_s)
-cor_ja = cor.test(dat_other_ja$confirm,y_ja)
+dat_other_ja_2<-GetNeighData("Ja",short_paths,2,files_s,path_s,date_start,date_end)
+cor_ja = cor.test(dat_other_ja_2$confirm,y_ja)
 
-dat_other_ko<-GetNeighData("Ko",short_paths,2,files_s,path_s)
-cor_ko = cor.test(dat_other_ko$confirm,y_ko)
+dat_other_ko_2<-GetNeighData("Ko",short_paths,2,files_s,path_s,date_start,date_end)
+cor_ko = cor.test(dat_other_ko_2$confirm,y_ko)
 
-dat_other_de<-GetNeighData("De",short_paths,2,files_s,path_s)
-cor_de = cor.test(dat_other_de$confirm, y_de)
+dat_other_de_2<-GetNeighData("De",short_paths,2,files_s,path_s,date_start,date_end)
+cor_de = cor.test(dat_other_de_2$confirm, y_de)
 
-dat_other_ru<-GetNeighData("Ru",short_paths,2,files_s,path_s)
-cor_ru = cor.test(dat_other_ru$confirm,y_ru)
+dat_other_ru_2<-GetNeighData("Ru",short_paths,2,files_s,path_s,date_start,date_end)
+cor_ru = cor.test(dat_other_ru_2$confirm,y_ru)
 
 
 cor_report_2 = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
@@ -192,7 +174,7 @@ plot_dat_conf = data.frame(cor= c(cor_report_0$cor,cor_report_1$cor,cor_report_2
                       pvalue = c(cor_report_0$pvalue,cor_report_1$pvalue,cor_report_2$pvalue),
                       type = c(rep("0-step Self",6),rep("1-step Neigh",6),rep("2-step Neigh",6)),stringsAsFactors = F)
 
-ggplot(plot_dat_conf,aes(x=type,y = cor))+geom_line(aes(group=name,colour=name))+geom_point(aes(colour=name))+ggtitle("Estimated Correlation")
+ggplot(plot_dat_conf,aes(x=type,y = cor))+geom_line(aes(group=name,colour=name))+geom_point(aes(colour=name))+ggtitle("Confirm: Estimated Correlation")
 #+ geom_ribbon(aes(ymin = lower, ymax=upper,group=name), alpha = 0.2) 
 
 ggplot(plot_dat_conf,aes(x=type,y = pvalue))+geom_line(aes(group=name,colour=name))+geom_point(aes(colour=name))+ggtitle("Cor Test P-value")
@@ -245,24 +227,12 @@ write.csv(cor_report_0,file="./data/results/Confirm_daily_twitter_self.csv")
 
 ```{r, include=FALSE}
 
-
-dat_other_it<-GetNeighData("It",short_paths,1,files_s,path_s)
-cor_it = cor.test(dat_other_it$confirm_daily,y_it)
-
-dat_other_hi<-GetNeighData("Hi",short_paths,1,files_s,path_s)
-cor_hi = cor.test(dat_other_hi$confirm_daily,y_hi)
-
-dat_other_ja<-GetNeighData("Ja",short_paths,1,files_s,path_s)
-cor_ja = cor.test(dat_other_ja$confirm_daily,y_ja)
-
-dat_other_ko<-GetNeighData("Ko",short_paths,1,files_s,path_s)
-cor_ko = cor.test(dat_other_ko$confirm_daily,y_ko)
-
-dat_other_de<-GetNeighData("De",short_paths,1,files_s,path_s)
-cor_de = cor.test(dat_other_de$confirm_daily,y_de)
-
-dat_other_ru<-GetNeighData("Ru",short_paths,1,files_s,path_s)
-cor_ru = cor.test(dat_other_ru$confirm_daily,y_ru)
+cor_it = cor.test(dat_other_it_1$confirm_daily,y_it)
+cor_hi = cor.test(dat_other_hi_1$confirm_daily,y_hi)
+cor_ja = cor.test(dat_other_ja_1$confirm_daily,y_ja)
+cor_ko = cor.test(dat_other_ko_1$confirm_daily,y_ko)
+cor_de = cor.test(dat_other_de_1$confirm_daily,y_de)
+cor_ru = cor.test(dat_other_ru_1$confirm_daily,y_ru)
 
 
 cor_report_1 = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
@@ -276,23 +246,12 @@ write.csv(cor_report_1,file="./data/results/Confirm_daily_twitter_neighbour1.csv
 ```
 
 ```{r, include=F}
-dat_other_it<-GetNeighData("It",short_paths,2,files_s,path_s)
-cor_it = cor.test(dat_other_it$confirm_daily,y_it)
-
-dat_other_hi<-GetNeighData("Hi",short_paths,2,files_s,path_s)
-cor_hi = cor.test(dat_other_hi$confirm_daily,y_hi)
-
-dat_other_ja<-GetNeighData("Ja",short_paths,2,files_s,path_s)
-cor_ja = cor.test(dat_other_ja$confirm_daily,y_ja)
-
-dat_other_ko<-GetNeighData("Ko",short_paths,2,files_s,path_s)
-cor_ko = cor.test(dat_other_ko$confirm_daily,y_ko)
-
-dat_other_de<-GetNeighData("De",short_paths,2,files_s,path_s)
-cor_de = cor.test(dat_other_de$confirm_daily,y_de)
-
-dat_other_ru<-GetNeighData("Ru",short_paths,2,files_s,path_s)
-cor_ru = cor.test(dat_other_ru$confirm_daily,y_ru)
+cor_it = cor.test(dat_other_it_2$confirm_daily,y_it)
+cor_hi = cor.test(dat_other_hi_2$confirm_daily,y_hi)
+cor_ja = cor.test(dat_other_ja_2$confirm_daily,y_ja)
+cor_ko = cor.test(dat_other_ko_2$confirm_daily,y_ko)
+cor_de = cor.test(dat_other_de_2$confirm_daily,y_de)
+cor_ru = cor.test(dat_other_ru_2$confirm_daily,y_ru)
 
 
 cor_report_2 = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
@@ -357,24 +316,12 @@ write.csv(cor_report_0,file="./data/results/Death_twitter_self.csv")
 ### Neighbors
 
 ```{r, include=F}
-
-dat_other_it<-GetNeighData("It",short_paths,1,files_s,path_s)
-cor_it = cor.test(dat_other_it$death,y_it)
-
-dat_other_hi<-GetNeighData("Hi",short_paths,1,files_s,path_s)
-cor_hi = cor.test(dat_other_hi$death,y_hi)
-
-dat_other_ja<-GetNeighData("Ja",short_paths,1,files_s,path_s)
-cor_ja = cor.test(dat_other_ja$death,y_ja)
-
-dat_other_ko<-GetNeighData("Ko",short_paths,1,files_s,path_s)
-cor_ko = cor.test(dat_other_ko$death,y_ko)
-
-dat_other_de<-GetNeighData("De",short_paths,1,files_s,path_s)
-cor_de = cor.test(dat_other_de$death,y_de)
-
-dat_other_ru<-GetNeighData("Ru",short_paths,1,files_s,path_s)
-cor_ru = cor.test(dat_other_ru$death,y_ru)
+cor_it = cor.test(dat_other_it_1$death,y_it)
+cor_hi = cor.test(dat_other_hi_1$death,y_hi)
+cor_ja = cor.test(dat_other_ja_1$death,y_ja)
+cor_ko = cor.test(dat_other_ko_1$death,y_ko)
+cor_de = cor.test(dat_other_de_1$death,y_de)
+cor_ru = cor.test(dat_other_ru_1$death,y_ru)
 
 
 cor_report_1 = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
@@ -388,23 +335,12 @@ write.csv(cor_report_1,file="./data/results/Death_twitter_neighbour1.csv")
 ```
 
 ```{r, include=F}
-dat_other_it<-GetNeighData("It",short_paths,2,files_s,path_s)
-cor_it = cor.test(dat_other_it$death,y_it)
-
-dat_other_hi<-GetNeighData("Hi",short_paths,2,files_s,path_s)
-cor_hi = cor.test(dat_other_hi$death,y_hi)
-
-dat_other_ja<-GetNeighData("Ja",short_paths,2,files_s,path_s)
-cor_ja = cor.test(dat_other_ja$death,y_ja)
-
-dat_other_ko<-GetNeighData("Ko",short_paths,2,files_s,path_s)
-cor_ko = cor.test(dat_other_ko$death,y_ko)
-
-dat_other_de<-GetNeighData("De",short_paths,2,files_s,path_s)
-cor_de = cor.test(dat_other_de$death, y_de)
-
-dat_other_ru<-GetNeighData("Ru",short_paths,2,files_s,path_s)
-cor_ru = cor.test(dat_other_ru$death,y_ru)
+cor_it = cor.test(dat_other_it_2$death,y_it)
+cor_hi = cor.test(dat_other_hi_2$death,y_hi)
+cor_ja = cor.test(dat_other_ja_2$death,y_ja)
+cor_ko = cor.test(dat_other_ko_2$death,y_ko)
+cor_de = cor.test(dat_other_de_2$death, y_de)
+cor_ru = cor.test(dat_other_ru_2$death,y_ru)
 
 
 cor_report_2 = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
@@ -427,7 +363,7 @@ plot_dat_death = data.frame(cor= c(cor_report_0$cor,cor_report_1$cor,cor_report_
                       pvalue = c(cor_report_0$pvalue,cor_report_1$pvalue,cor_report_2$pvalue),
                       type = c(rep("0-step Self",6),rep("1-step Neigh",6),rep("2-step Neigh",6)),stringsAsFactors = F)
 
-ggplot(plot_dat_death,aes(x=type,y = cor))+geom_line(aes(group=name,colour=name))+ geom_point(aes(colour=name))#+ geom_ribbon(aes(ymin = lower,group=name, ymax=upper),alpha=.2)
+ggplot(plot_dat_death,aes(x=type,y = cor))+geom_line(aes(group=name,colour=name))+ geom_point(aes(colour=name))+ggtitle("Death")#+ geom_ribbon(aes(ymin = lower,group=name, ymax=upper),alpha=.2)
 
 
 ggplot(plot_dat_death,aes(x=type,y = pvalue))+geom_line(aes(group=name,colour=name))+geom_point(aes(colour=name))+ggtitle("Cor Test P-value")
@@ -469,24 +405,12 @@ write.csv(cor_report_0,file="./data/results/Death_daily_twitter_self.csv")
 
 
 ### Neighbors
-
-dat_other_it<-GetNeighData("It",short_paths,1,files_s,path_s)
-cor_it = cor.test(dat_other_it$death_daily,y_it)
-
-dat_other_hi<-GetNeighData("Hi",short_paths,1,files_s,path_s)
-cor_hi = cor.test(dat_other_hi$death_daily,y_hi)
-
-dat_other_ja<-GetNeighData("Ja",short_paths,1,files_s,path_s)
-cor_ja = cor.test(dat_other_ja$death_daily,y_ja)
-
-dat_other_ko<-GetNeighData("Ko",short_paths,1,files_s,path_s)
-cor_ko = cor.test(dat_other_ko$death_daily,y_ko)
-
-dat_other_de<-GetNeighData("De",short_paths,1,files_s,path_s)
-cor_de = cor.test(dat_other_de$death_daily,y_de)
-
-dat_other_ru<-GetNeighData("Ru",short_paths,1,files_s,path_s)
-cor_ru = cor.test(dat_other_ru$death_daily,y_ru)
+cor_it = cor.test(dat_other_it_1$death_daily,y_it)
+cor_hi = cor.test(dat_other_hi_1$death_daily,y_hi)
+cor_ja = cor.test(dat_other_ja_1$death_daily,y_ja)
+cor_ko = cor.test(dat_other_ko_1$death_daily,y_ko)
+cor_de = cor.test(dat_other_de_1$death_daily,y_de)
+cor_ru = cor.test(dat_other_ru_1$death_daily,y_ru)
 
 
 cor_report_1 = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
@@ -497,24 +421,12 @@ cor_report_1 = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estima
 #cor_report_1
 write.csv(cor_report_1,file="./data/results/Death_daily_twitter_neighbour1.csv")
 
-
-dat_other_it<-GetNeighData("It",short_paths,2,files_s,path_s)
-cor_it = cor.test(dat_other_it$death_daily,y_it)
-
-dat_other_hi<-GetNeighData("Hi",short_paths,2,files_s,path_s)
-cor_hi = cor.test(dat_other_hi$death_daily,y_hi)
-
-dat_other_ja<-GetNeighData("Ja",short_paths,2,files_s,path_s)
-cor_ja = cor.test(dat_other_ja$death_daily,y_ja)
-
-dat_other_ko<-GetNeighData("Ko",short_paths,2,files_s,path_s)
-cor_ko = cor.test(dat_other_ko$death_daily,y_ko)
-
-dat_other_de<-GetNeighData("De",short_paths,2,files_s,path_s)
-cor_de = cor.test(dat_other_de$death_daily, y_de)
-
-dat_other_ru<-GetNeighData("Ru",short_paths,2,files_s,path_s)
-cor_ru = cor.test(dat_other_ru$death_daily,y_ru)
+cor_it = cor.test(dat_other_it_2$death_daily,y_it)
+cor_hi = cor.test(dat_other_hi_2$death_daily,y_hi)
+cor_ja = cor.test(dat_other_ja_2$death_daily,y_ja)
+cor_ko = cor.test(dat_other_ko_2$death_daily,y_ko)
+cor_de = cor.test(dat_other_de_2$death_daily, y_de)
+cor_ru = cor.test(dat_other_ru_2$death_daily,y_ru)
 
 
 cor_report_2 = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
@@ -537,7 +449,7 @@ plot_dat_death_daily = data.frame(cor= c(cor_report_0$cor,cor_report_1$cor,cor_r
                       pvalue = c(cor_report_0$pvalue,cor_report_1$pvalue,cor_report_2$pvalue),
                       type = c(rep("0-step Self",6),rep("1-step Neigh",6),rep("2-step Neigh",6)),stringsAsFactors = F)
 
-ggplot(plot_dat_death_daily,aes(x=type,y = cor))+ geom_line(aes(group=name,colour=name))+ geom_point(aes(colour=name)) #+ geom_ribbon(aes(ymin = lower,group=name, ymax=upper),alpha=.2)
+ggplot(plot_dat_death_daily,aes(x=type,y = cor))+ geom_line(aes(group=name,colour=name))+ geom_point(aes(colour=name))+ggtitle("Death Daily") #+ geom_ribbon(aes(ymin = lower,group=name, ymax=upper),alpha=.2)
 
 
 ggplot(plot_dat_death_daily,aes(x=type,y = pvalue))+geom_line(aes(group=name,colour=name))+geom_point(aes(colour=name))+ggtitle("Cor Test P-value")
@@ -546,9 +458,7 @@ ggplot(plot_dat_death_daily,aes(x=type,y = pvalue))+geom_line(aes(group=name,col
 ## ConfDR
 
 ```{r, include=F}
-
 ### Itself
-
 x_de = de$ConfDR[date_start:date_end]
 cor_de = cor.test(x_de,y_de)
 
@@ -577,24 +487,12 @@ write.csv(cor_report_0,file="./data/results/ConfDR_twitter_self.csv")
 
 ### Neighbours
 
-
-dat_other_it<-GetNeighData("It",short_paths,1,files_s,path_s)
-cor_it = cor.test(dat_other_it$ConfDR,y_it)
-
-dat_other_hi<-GetNeighData("Hi",short_paths,1,files_s,path_s)
-cor_hi = cor.test(dat_other_hi$ConfDR,y_hi)
-
-dat_other_ja<-GetNeighData("Ja",short_paths,1,files_s,path_s)
-cor_ja = cor.test(dat_other_ja$ConfDR,y_ja)
-
-dat_other_ko<-GetNeighData("Ko",short_paths,1,files_s,path_s)
-cor_ko = cor.test(dat_other_ko$ConfDR,y_ko)
-
-dat_other_de<-GetNeighData("De",short_paths,1,files_s,path_s)
-cor_de = cor.test(dat_other_de$ConfDR,y_de)
-
-dat_other_ru<-GetNeighData("Ru",short_paths,1,files_s,path_s)
-cor_ru = cor.test(dat_other_ru$ConfDR,y_ru)
+cor_it = cor.test(dat_other_it_1$ConfDR,y_it)
+cor_hi = cor.test(dat_other_hi_1$ConfDR,y_hi)
+cor_ja = cor.test(dat_other_ja_1$ConfDR,y_ja)
+cor_ko = cor.test(dat_other_ko_1$ConfDR,y_ko)
+cor_de = cor.test(dat_other_de_1$ConfDR,y_de)
+cor_ru = cor.test(dat_other_ru_1$ConfDR,y_ru)
 
 
 cor_report_1 = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
@@ -604,23 +502,13 @@ cor_report_1 = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estima
                         pvalue = c(cor_de$p.value,cor_hi$p.value, cor_it$p.value,cor_ja$p.value, cor_ko$p.value,cor_ru$p.value),stringsAsFactors = F)
 #cor_report_1
 write.csv(cor_report_1,file="./data/results/ConfDR_twitter_neighbour1.csv")
-dat_other_it<-GetNeighData("It",short_paths,2,files_s,path_s)
-cor_it = cor.test(dat_other_it$ConfDR,y_it)
 
-dat_other_hi<-GetNeighData("Hi",short_paths,2,files_s,path_s)
-cor_hi = cor.test(dat_other_hi$ConfDR,y_hi)
-
-dat_other_ja<-GetNeighData("Ja",short_paths,2,files_s,path_s)
-cor_ja = cor.test(dat_other_ja$ConfDR,y_ja)
-
-dat_other_ko<-GetNeighData("Ko",short_paths,2,files_s,path_s)
-cor_ko = cor.test(dat_other_ko$ConfDR,y_ko)
-
-dat_other_de<-GetNeighData("De",short_paths,2,files_s,path_s)
-cor_de = cor.test(dat_other_de$ConfDR, y_de)
-
-dat_other_ru<-GetNeighData("Ru",short_paths,2,files_s,path_s)
-cor_ru = cor.test(dat_other_ru$ConfDR,y_ru)
+cor_it = cor.test(dat_other_it_2$ConfDR,y_it)
+cor_hi = cor.test(dat_other_hi_2$ConfDR,y_hi)
+cor_ja = cor.test(dat_other_ja_2$ConfDR,y_ja)
+cor_ko = cor.test(dat_other_ko_2$ConfDR,y_ko)
+cor_de = cor.test(dat_other_de_2$ConfDR, y_de)
+cor_ru = cor.test(dat_other_ru_2$ConfDR,y_ru)
 
 
 cor_report_2 = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
@@ -645,7 +533,7 @@ plot_dat_confdr = data.frame(cor= c(cor_report_0$cor,cor_report_1$cor,cor_report
 ggplot(plot_dat_confdr,aes(x=type,y = cor))+ geom_line(aes(group=name,colour=name))+ geom_point(aes(colour=name)) #+ geom_ribbon(aes(ymin = lower,group=name, ymax=upper),alpha=.2)
 
 
-ggplot(plot_dat_death_daily,aes(x=type,y = pvalue))+geom_line(aes(group=name,colour=name))+geom_point(aes(colour=name))+ggtitle("Cor Test P-value")
+ggplot(plot_dat_confdr,aes(x=type,y = pvalue))+geom_line(aes(group=name,colour=name))+geom_point(aes(colour=name))+ggtitle("Cor Test P-value")
 ```
 
 ## DeathR
@@ -681,25 +569,12 @@ cor_report_dr = cor_report_0
 write.csv(cor_report_0,file="./data/results/DeathR_twitter_self.csv")
 
 ### Neighbours
-
-
-dat_other_it<-GetNeighData("It",short_paths,1,files_s,path_s)
-cor_it = cor.test(dat_other_it$DeathR,y_it)
-
-dat_other_hi<-GetNeighData("Hi",short_paths,1,files_s,path_s)
-cor_hi = cor.test(dat_other_hi$DeathR,y_hi)
-
-dat_other_ja<-GetNeighData("Ja",short_paths,1,files_s,path_s)
-cor_ja = cor.test(dat_other_ja$DeathR,y_ja)
-
-dat_other_ko<-GetNeighData("Ko",short_paths,1,files_s,path_s)
-cor_ko = cor.test(dat_other_ko$DeathR,y_ko)
-
-dat_other_de<-GetNeighData("De",short_paths,1,files_s,path_s)
-cor_de = cor.test(dat_other_de$DeathR,y_de)
-
-dat_other_ru<-GetNeighData("Ru",short_paths,1,files_s,path_s)
-cor_ru = cor.test(dat_other_ru$DeathR,y_ru)
+cor_it = cor.test(dat_other_it_1$DeathR,y_it)
+cor_hi = cor.test(dat_other_hi_1$DeathR,y_hi)
+cor_ja = cor.test(dat_other_ja_1$DeathR,y_ja)
+cor_ko = cor.test(dat_other_ko_1$DeathR,y_ko)
+cor_de = cor.test(dat_other_de_1$DeathR,y_de)
+cor_ru = cor.test(dat_other_ru_1$DeathR,y_ru)
 
 
 cor_report_1 = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
@@ -709,23 +584,13 @@ cor_report_1 = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estima
                         pvalue = c(cor_de$p.value,cor_hi$p.value, cor_it$p.value,cor_ja$p.value, cor_ko$p.value,cor_ru$p.value),stringsAsFactors = F)
 #cor_report_1
 write.csv(cor_report_1,file="./data/results/DeathR_twitter_neighbour1.csv")
-dat_other_it<-GetNeighData("It",short_paths,2,files_s,path_s)
-cor_it = cor.test(dat_other_it$DeathR,y_it)
 
-dat_other_hi<-GetNeighData("Hi",short_paths,2,files_s,path_s)
-cor_hi = cor.test(dat_other_hi$DeathR,y_hi)
-
-dat_other_ja<-GetNeighData("Ja",short_paths,2,files_s,path_s)
-cor_ja = cor.test(dat_other_ja$DeathR,y_ja)
-
-dat_other_ko<-GetNeighData("Ko",short_paths,2,files_s,path_s)
-cor_ko = cor.test(dat_other_ko$DeathR,y_ko)
-
-dat_other_de<-GetNeighData("De",short_paths,2,files_s,path_s)
-cor_de = cor.test(dat_other_de$DeathR, y_de)
-
-dat_other_ru<-GetNeighData("Ru",short_paths,2,files_s,path_s)
-cor_ru = cor.test(dat_other_ru$DeathR,y_ru)
+cor_it = cor.test(dat_other_it_2$DeathR,y_it)
+cor_hi = cor.test(dat_other_hi_2$DeathR,y_hi)
+cor_ja = cor.test(dat_other_ja_2$DeathR,y_ja)
+cor_ko = cor.test(dat_other_ko_2$DeathR,y_ko)
+cor_de = cor.test(dat_other_de_2$DeathR, y_de)
+cor_ru = cor.test(dat_other_ru_2$DeathR,y_ru)
 
 
 cor_report_2 = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
@@ -740,17 +605,99 @@ write.csv(cor_report_2,file="./data/results/DeathR_twitter_neighbour2.csv")
 ### Report
 ```{r, echo=F}
 library(ggplot2)
-plot_dat_confdr = data.frame(cor= c(cor_report_0$cor,cor_report_1$cor,cor_report_2$cor),
+plot_dat_deathr = data.frame(cor= c(cor_report_0$cor,cor_report_1$cor,cor_report_2$cor),
                       name = c(cor_report_0$name,cor_report_1$name,cor_report_2$name), 
                       lower = c(cor_report_0$low, cor_report_1$low, cor_report_2$low),
                       upper = c(cor_report_0$up, cor_report_1$up, cor_report_2$up),
                       pvalue = c(cor_report_0$pvalue,cor_report_1$pvalue,cor_report_2$pvalue),
                       type = c(rep("0-step Self",6),rep("1-step Neigh",6),rep("2-step Neigh",6)),stringsAsFactors = F)
 
-ggplot(plot_dat_confdr,aes(x=type,y = cor))+ geom_line(aes(group=name,colour=name))+ geom_point(aes(colour=name)) #+ geom_ribbon(aes(ymin = lower,group=name, ymax=upper),alpha=.2)
+ggplot(plot_dat_deathr,aes(x=type,y = cor))+ geom_line(aes(group=name,colour=name))+ geom_point(aes(colour=name)) #+ geom_ribbon(aes(ymin = lower,group=name, ymax=upper),alpha=.2)
 
 
-ggplot(plot_dat_death_daily,aes(x=type,y = pvalue))+geom_line(aes(group=name,colour=name))+geom_point(aes(colour=name))+ggtitle("Cor Test P-value")
+ggplot(plot_dat_deathr,aes(x=type,y = pvalue))+geom_line(aes(group=name,colour=name))+geom_point(aes(colour=name))+ggtitle("Cor Test P-value")
+```
+
+## Recover
+
+```{r, include=F}
+
+### Itself
+
+x_de = de$recover[date_start:date_end]
+cor_de = cor.test(x_de,y_de)
+
+x_it = it$recover[date_start:date_end]
+cor_it = cor.test(x_it,y_it)
+
+x_hi = hi$recover[date_start:date_end]
+cor_hi = cor.test(x_hi,y_hi)
+
+x_ja = ja$recover[date_start:date_end]
+cor_ja = cor.test(x_ja,y_ja)
+
+x_ko = ko$recover[date_start:date_end]
+cor_ko = cor.test(x_ko,y_ko)
+
+x_ru = ru$recover[date_start:date_end]
+cor_ru = cor.test(x_ru,y_ru)
+
+cor_report_0 = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
+                        name = c("de","hi","it","ja","ko","ru"), 
+                        low = c(cor_de$conf.int[1],cor_hi$conf.int[1], cor_it$conf.int[1], cor_ja$conf.int[1], cor_ko$conf.int[1], cor_ru$conf.int[1]),
+                        up = c(cor_de$conf.int[2], cor_hi$conf.int[2], cor_it$conf.int[2], cor_ja$conf.int[2], cor_ko$conf.int[2],cor_ru$conf.int[2]),
+                        pvalue = c(cor_de$p.value,cor_hi$p.value, cor_it$p.value,cor_ja$p.value, cor_ko$p.value,cor_ru$p.value),stringsAsFactors = F)
+cor_report_rec = cor_report_0
+write.csv(cor_report_0,file="./data/results/Recover_twitter_self.csv")
+
+### Neighbours
+cor_it = cor.test(dat_other_it_1$recover,y_it)
+cor_hi = cor.test(dat_other_hi_1$recover,y_hi)
+cor_ja = cor.test(dat_other_ja_1$recover,y_ja)
+cor_ko = cor.test(dat_other_ko_1$recover,y_ko)
+cor_de = cor.test(dat_other_de_1$recover,y_de)
+cor_ru = cor.test(dat_other_ru_1$recover,y_ru)
+
+
+cor_report_1 = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
+                        name = c("de","hi","it","ja","ko","ru"), 
+                        low = c(cor_de$conf.int[1],cor_hi$conf.int[1], cor_it$conf.int[1], cor_ja$conf.int[1], cor_ko$conf.int[1], cor_ru$conf.int[1]),
+                        up = c(cor_de$conf.int[2], cor_hi$conf.int[2], cor_it$conf.int[2], cor_ja$conf.int[2], cor_ko$conf.int[2],cor_ru$conf.int[2]),
+                        pvalue = c(cor_de$p.value,cor_hi$p.value, cor_it$p.value,cor_ja$p.value, cor_ko$p.value,cor_ru$p.value),stringsAsFactors = F)
+#cor_report_1
+write.csv(cor_report_1,file="./data/results/Recover_twitter_neighbour1.csv")
+
+cor_it = cor.test(dat_other_it_2$recover,y_it)
+cor_hi = cor.test(dat_other_hi_2$recover,y_hi)
+cor_ja = cor.test(dat_other_ja_2$recover,y_ja)
+cor_ko = cor.test(dat_other_ko_2$recover,y_ko)
+cor_de = cor.test(dat_other_de_2$recover, y_de)
+cor_ru = cor.test(dat_other_ru_2$recover,y_ru)
+
+
+cor_report_2 = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
+                        name = c("de","hi","it","ja","ko","ru"), 
+                        low = c(cor_de$conf.int[1],cor_hi$conf.int[1], cor_it$conf.int[1], cor_ja$conf.int[1], cor_ko$conf.int[1], cor_ru$conf.int[1]),
+                        up = c(cor_de$conf.int[2], cor_hi$conf.int[2], cor_it$conf.int[2], cor_ja$conf.int[2], cor_ko$conf.int[2],cor_ru$conf.int[2]),
+                        pvalue = c(cor_de$p.value,cor_hi$p.value, cor_it$p.value,cor_ja$p.value, cor_ko$p.value,cor_ru$p.value), stringsAsFactors = F)
+#cor_report_2
+write.csv(cor_report_2,file="./data/results/Recover_twitter_neighbour2.csv")
+
+```
+### Report
+```{r, echo=F}
+library(ggplot2)
+plot_dat_rec = data.frame(cor= c(cor_report_0$cor,cor_report_1$cor,cor_report_2$cor),
+                      name = c(cor_report_0$name,cor_report_1$name,cor_report_2$name), 
+                      lower = c(cor_report_0$low, cor_report_1$low, cor_report_2$low),
+                      upper = c(cor_report_0$up, cor_report_1$up, cor_report_2$up),
+                      pvalue = c(cor_report_0$pvalue,cor_report_1$pvalue,cor_report_2$pvalue),
+                      type = c(rep("0-step Self",6),rep("1-step Neigh",6),rep("2-step Neigh",6)),stringsAsFactors = F)
+
+ggplot(plot_dat_rec,aes(x=type,y = cor))+ geom_line(aes(group=name,colour=name))+ geom_point(aes(colour=name))+ggtitle("Recover") #+ geom_ribbon(aes(ymin = lower,group=name, ymax=upper),alpha=.2)
+
+
+ggplot(plot_dat_rec,aes(x=type,y = pvalue))+geom_line(aes(group=name,colour=name))+geom_point(aes(colour=name))+ggtitle("Cor Test P-value")
 ```
 
 
@@ -758,10 +705,10 @@ ggplot(plot_dat_death_daily,aes(x=type,y = pvalue))+geom_line(aes(group=name,col
 
 ```{r}
 
-plot_dat<-data.frame(cor = c(cor_report_cf$cor,cor_report_cfd$cor,cor_report_d$cor,cor_report_dd$cor,cor_report_cdr$cor,cor_report_dr$cor),
-                     pvalue = c(cor_report_cf$pvalue,cor_report_cfd$pvalue,cor_report_d$pvalue,cor_report_dd$pvalue,cor_report_cdr$pvalue,cor_report_dr$pvalue),
-                       name = c(cor_report_cf$name,cor_report_cfd$name,cor_report_d$name,cor_report_dd$name,cor_report_cdr$name,cor_report_dr$name),
-                       type = c(rep("Confirm",6),rep("Confirm_daily",6),rep("Death",6),rep("Death_daily",6),rep("ConfDR",6),rep("DeathR",6)))
+plot_dat<-data.frame(cor = c(cor_report_cf$cor,cor_report_cfd$cor,cor_report_d$cor,cor_report_dd$cor,cor_report_cdr$cor,cor_report_dr$cor,cor_report_rec$cor),
+                     pvalue = c(cor_report_cf$pvalue,cor_report_cfd$pvalue,cor_report_d$pvalue,cor_report_dd$pvalue,cor_report_cdr$pvalue,cor_report_dr$pvalue,cor_report_rec$pvalue),
+                       name = c(cor_report_cf$name,cor_report_cfd$name,cor_report_d$name,cor_report_dd$name,cor_report_cdr$name,cor_report_dr$name,cor_report_rec$name),
+                       type = c(rep("Confirm",6),rep("Confirm_daily",6),rep("Death",6),rep("Death_daily",6),rep("ConfDR",6),rep("DeathR",6),rep("Recover",6)))
 
 ggplot(plot_dat,aes(x=type,y = cor)) + geom_line(aes(group=name,colour=name))+ geom_point(aes(colour=name))
 ggplot(plot_dat,aes(x=type,y = pvalue)) + geom_line(aes(group=name,colour=name))+ geom_point(aes(colour=name))

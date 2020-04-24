@@ -1,0 +1,341 @@
+---
+title: "4Strength Google"
+author: "Guirong Fu"
+date: "April 19, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+rm(list=ls())
+library(dplyr)
+library(glmnet)
+library(xgboost)
+library(Matrix)
+library(stringr)
+library(rjson)
+library(ggplot2)
+library(jsonlite)
+source("./lib/utils.R")
+```
+
+
+
+## Read data
+
+```{r, include=FALSE}
+
+getwd() %>% paste0("/data/")->path
+files=dir(path)
+covid = files[grep("[0-9]?covid\\s?",files)]
+
+covid_confirm<-ReadCovid(covid[1])
+covid_deadnum<-ReadCovid(covid[2])
+covid_recover<-ReadCovid(covid[3])
+
+dates = rownames(covid_confirm)
+
+pop_dat<-fromJSON(paste0(readLines(paste0(path,"world_population.json"))))
+pop_dat$country
+
+it = data.frame(confirm = covid_confirm[,"Italy"], death = covid_deadnum[,"Italy"], recover= covid_recover[,"Italy"], stringsAsFactors = F)
+it = ExtractStrengthFeature(it, as.numeric(pop_dat$population[pop_dat$country=="Italy"]))
+target_it = read.csv("./data/Google/italy.csv",stringsAsFactors = F,header = FALSE)
+
+de = data.frame(confirm = covid_confirm[,"Germany"], death = covid_deadnum[,"Germany"], recover= covid_recover[,"Germany"], stringsAsFactors = F)
+de = ExtractStrengthFeature(it, as.numeric(pop_dat$population[pop_dat$country=="Germany"]))
+target_de = read.csv("./data/Google/germany.csv",stringsAsFactors = F,header = FALSE)
+
+
+hi = data.frame(confirm = covid_confirm[,"India"], death = covid_deadnum[,"India"], recover= covid_recover[,"India"], stringsAsFactors = F)
+hi = ExtractStrengthFeature(it, as.numeric(pop_dat$population[pop_dat$country=="India"]))
+target_hi = read.csv("./data/Google/india.csv",stringsAsFactors = F,header = FALSE)
+
+ja = data.frame(confirm = covid_confirm[,"Japan"], death = covid_deadnum[,"Japan"], recover= covid_recover[,"Japan"], stringsAsFactors = F)
+ja = ExtractStrengthFeature(it, as.numeric(pop_dat$population[pop_dat$country=="Japan"]))
+target_ja = read.csv("./data/Google/japan.csv",stringsAsFactors = F,header = FALSE)
+
+ru = data.frame(confirm = covid_confirm[,"Russia"], death = covid_deadnum[,"Russia"], recover= covid_recover[,"Russia"], stringsAsFactors = F)
+ru = ExtractStrengthFeature(it, as.numeric(pop_dat$population[pop_dat$country=="Russian Federation"]))
+target_ru = read.csv("./data/Google/russia.csv",stringsAsFactors = F,header = FALSE)
+
+ko = data.frame(confirm = covid_confirm[,"Korea, South"], death = covid_deadnum[,"Korea, South"], recover= covid_recover[,"Korea, South"], stringsAsFactors = F)
+ko = ExtractStrengthFeature(it, as.numeric(pop_dat$population[pop_dat$country=="South Korea"]))
+target_ko = read.csv("./data/Google/southkorea.csv",stringsAsFactors = F,header = FALSE)
+
+
+```
+
+## Confirm 
+
+
+```{r, echo=FALSE}
+x_start=1 # 1.22
+x_end=90 # 4.20
+y_start = 2 # 1.22
+y_end = 91 # 4.20
+
+
+x_de = de$confirm[x_start:x_end] # 1.22-4.20
+#y_de = target_de$V2[(y_start+1):(y_end+1)] #1.23 - 4.21 # cor: 0.1613869 
+y_de = target_de$V2[y_start:y_end] #1.22 - 4.20 # cor: 0.2023827 
+cor_de = cor.test(x_de,y_de)
+
+x_it = it$confirm[x_start:x_end] # 1.22-4.20
+#y_it = target_it$V2[(y_start+1):(y_end+1)] # 1.23 - 4.21  # cor: 0.0178889  
+y_it = target_it$V2[y_start:y_end] #1.22 - 4.20 # cor: 0.05333476
+#cor.test(x_it,y_it)
+cor_it = cor.test(x_it,y_it) 
+
+x_hi = hi$confirm[x_start:x_end] # 1.22-4.20
+#y_hi = target_hi$V2[(y_start+1):(y_end+1)] #1.23 - 4.20 # cor: 0.7783421 
+y_hi = target_hi$V2[y_start:y_end] #1.22 - 4.21 # cor: 0.8092172 
+cor_hi = cor.test(x_hi,y_hi)
+#cor_hi
+
+x_ja = ja$confirm[x_start:x_end] 
+#y_ja = target_ja$V2[(y_start+1):(y_end+1)] #0.4574449
+y_ja = target_ja$V2[y_start:y_end] #0.4990351 
+cor_ja = cor.test(x_ja,y_ja)
+#cor_ja
+
+x_ko = ko$confirm[x_start:x_end] 
+#y_ko = target_ko$V2[(y_start+1):(y_end+1)] #0.4950802 
+y_ko = target_ko$V2[y_start:y_end] #0.5254608 
+cor_ko = cor.test(x_ko,y_ko)
+#cor_ko
+
+x_ru = ru$confirm[x_start:x_end] 
+#y_ru = target_ru$V2[(y_start+1):(y_end+1)] #0.6698659 
+y_ru = target_ru$V2[y_start:y_end] #0.6982716 
+cor_ru = cor.test(x_ru,y_ru)
+#cor_ru
+
+cor_report_cf = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
+                        name = c("de","hi","it","ja","ko","ru"), 
+                        low = c(cor_de$conf.int[1],cor_hi$conf.int[1], cor_it$conf.int[1], cor_ja$conf.int[1], cor_ko$conf.int[1], cor_ru$conf.int[1]),
+                        up = c(cor_de$conf.int[2], cor_hi$conf.int[2], cor_it$conf.int[2], cor_ja$conf.int[2], cor_ko$conf.int[2],cor_ru$conf.int[2]),
+                        pvalue = c(cor_de$p.value,cor_hi$p.value, cor_it$p.value,cor_ja$p.value, cor_ko$p.value,cor_ru$p.value),stringsAsFactors = F)
+cor_report_cf
+write.csv(cor_report_cf,file="./data/results/Confirm_self_google.csv")
+
+barplot(cor_report_cf$cor, names.arg = cor_report_cf$name) 
+```
+
+
+## Confirm daily
+
+```{r, echo=F}
+x_de = de$confirm_daily[x_start:x_end]
+cor_de = cor.test(x_de,y_de)
+
+x_it = it$confirm_daily[x_start:x_end]
+cor_it = cor.test(x_it,y_it)
+
+x_hi = hi$confirm_daily[x_start:x_end]
+cor_hi = cor.test(x_hi,y_hi)
+
+x_ja = ja$confirm_daily[x_start:x_end]
+cor_ja = cor.test(x_ja,y_ja)
+
+x_ko = ko$confirm_daily[x_start:x_end]
+cor_ko = cor.test(x_ko,y_ko)
+
+
+x_ru = ru$confirm_daily[x_start:x_end]
+cor_ru = cor.test(x_ru,y_ru)
+
+cor_report_cfd = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
+                        name = c("de","hi","it","ja","ko","ru"), 
+                        low = c(cor_de$conf.int[1],cor_hi$conf.int[1], cor_it$conf.int[1], cor_ja$conf.int[1], cor_ko$conf.int[1], cor_ru$conf.int[1]),
+                        up = c(cor_de$conf.int[2], cor_hi$conf.int[2], cor_it$conf.int[2], cor_ja$conf.int[2], cor_ko$conf.int[2],cor_ru$conf.int[2]),
+                        pvalue = c(cor_de$p.value,cor_hi$p.value, cor_it$p.value,cor_ja$p.value, cor_ko$p.value,cor_ru$p.value),stringsAsFactors = F)
+cor_report_cfd
+write.csv(cor_report_cfd,file="./data/results/Confirm_daily_self_google.csv")
+barplot(cor_report_cfd$cor,names.arg = cor_report_cfd$cor)
+
+```
+
+
+## Death 
+
+
+```{r, echo=F}
+x_de = de$death[x_start:x_end]
+cor_de = cor.test(x_de,y_de)
+
+x_it = it$death[x_start:x_end]
+cor_it = cor.test(x_it,y_it)
+
+x_hi = hi$death[x_start:x_end]
+cor_hi = cor.test(x_hi,y_hi)
+
+x_ja = ja$death[x_start:x_end]
+cor_ja = cor.test(x_ja,y_ja)
+
+x_ko = ko$death[x_start:x_end]
+cor_ko = cor.test(x_ko,y_ko)
+
+
+x_ru = ru$death[x_start:x_end]
+cor_ru = cor.test(x_ru,y_ru)
+
+cor_report_d = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
+                        name = c("de","hi","it","ja","ko","ru"), 
+                        low = c(cor_de$conf.int[1],cor_hi$conf.int[1], cor_it$conf.int[1], cor_ja$conf.int[1], cor_ko$conf.int[1], cor_ru$conf.int[1]),
+                        up = c(cor_de$conf.int[2], cor_hi$conf.int[2], cor_it$conf.int[2], cor_ja$conf.int[2], cor_ko$conf.int[2],cor_ru$conf.int[2]),
+                        pvalue = c(cor_de$p.value,cor_hi$p.value, cor_it$p.value,cor_ja$p.value, cor_ko$p.value,cor_ru$p.value),stringsAsFactors = F)
+cor_report_d
+write.csv(cor_report_d,file="./data/results/Death_self_google.csv")
+
+barplot(cor_report_d$cor, names.arg = cor_report_d$name)
+
+```
+
+## Death Daily
+
+```{r, echo=F}
+x_de = de$death_daily[x_start:x_end]
+cor_de = cor.test(x_de,y_de)
+
+x_it = it$death_daily[x_start:x_end]
+cor_it = cor.test(x_it,y_it)
+
+x_hi = hi$death_daily[x_start:x_end]
+cor_hi = cor.test(x_hi,y_hi)
+
+x_ja = ja$death_daily[x_start:x_end]
+cor_ja = cor.test(x_ja,y_ja)
+
+x_ko = ko$death_daily[x_start:x_end]
+cor_ko = cor.test(x_ko,y_ko)
+
+
+x_ru = ru$death_daily[x_start:x_end]
+cor_ru = cor.test(x_ru,y_ru)
+
+cor_report_dd = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
+                        name = c("de","hi","it","ja","ko","ru"), 
+                        low = c(cor_de$conf.int[1],cor_hi$conf.int[1], cor_it$conf.int[1], cor_ja$conf.int[1], cor_ko$conf.int[1], cor_ru$conf.int[1]),
+                        up = c(cor_de$conf.int[2], cor_hi$conf.int[2], cor_it$conf.int[2], cor_ja$conf.int[2], cor_ko$conf.int[2],cor_ru$conf.int[2]),
+                        pvalue = c(cor_de$p.value,cor_hi$p.value, cor_it$p.value,cor_ja$p.value, cor_ko$p.value,cor_ru$p.value),stringsAsFactors = F)
+cor_report_dd
+write.csv(cor_report_dd,file="./data/results/Death_daily_self_google.csv")
+barplot(cor_report_dd$cor,names.arg = cor_report_dd$name)
+
+```
+
+
+## ConfDR
+
+```{r, echo=F}
+x_de = de$ConfDR[x_start:x_end]
+cor_de = cor.test(x_de,y_de)
+
+x_it = it$ConfDR[x_start:x_end]
+cor_it = cor.test(x_it,y_it)
+
+x_hi = hi$ConfDR[x_start:x_end]
+cor_hi = cor.test(x_hi,y_hi)
+
+x_ja = ja$ConfDR[x_start:x_end]
+cor_ja = cor.test(x_ja,y_ja)
+
+x_ko = ko$ConfDR[x_start:x_end]
+cor_ko = cor.test(x_ko,y_ko)
+
+
+x_ru = ru$ConfDR[x_start:x_end]
+cor_ru = cor.test(x_ru,y_ru)
+
+cor_report_cdr = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
+                        name = c("de","hi","it","ja","ko","ru"), 
+                        low = c(cor_de$conf.int[1],cor_hi$conf.int[1], cor_it$conf.int[1], cor_ja$conf.int[1], cor_ko$conf.int[1], cor_ru$conf.int[1]),
+                        up = c(cor_de$conf.int[2], cor_hi$conf.int[2], cor_it$conf.int[2], cor_ja$conf.int[2], cor_ko$conf.int[2],cor_ru$conf.int[2]),
+                        pvalue = c(cor_de$p.value,cor_hi$p.value, cor_it$p.value,cor_ja$p.value, cor_ko$p.value,cor_ru$p.value),stringsAsFactors = F)
+cor_report_dd
+write.csv(cor_report_cdr,file="./data/results/ConfDR_self_google.csv")
+barplot(cor_report_cdr$cor,names.arg = cor_report_cdr$name)
+
+```
+
+
+## DeathR
+
+```{r, echo=F}
+x_de =  de$DeathR[x_start:x_end]
+cor_de = cor.test(x_de,y_de)
+
+x_it = it$DeathR[x_start:x_end]
+cor_it = cor.test(x_it,y_it)
+
+x_hi = hi$DeathR[x_start:x_end]
+cor_hi = cor.test(x_hi,y_hi)
+
+x_ja = ja$DeathR[x_start:x_end]
+cor_ja = cor.test(x_ja,y_ja)
+
+x_ko = ko$DeathR[x_start:x_end]
+cor_ko = cor.test(x_ko,y_ko)
+
+
+x_ru = ru$DeathR[x_start:x_end]
+cor_ru = cor.test(x_ru,y_ru)
+
+cor_report_dr = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
+                        name = c("de","hi","it","ja","ko","ru"), 
+                        low = c(cor_de$conf.int[1],cor_hi$conf.int[1], cor_it$conf.int[1], cor_ja$conf.int[1], cor_ko$conf.int[1], cor_ru$conf.int[1]),
+                        up = c(cor_de$conf.int[2], cor_hi$conf.int[2], cor_it$conf.int[2], cor_ja$conf.int[2], cor_ko$conf.int[2],cor_ru$conf.int[2]),
+                        pvalue = c(cor_de$p.value,cor_hi$p.value, cor_it$p.value,cor_ja$p.value, cor_ko$p.value,cor_ru$p.value),stringsAsFactors = F)
+#cor_report_dr
+write.csv(cor_report_dr,file="./data/results/DeathR_self_google.csv")
+barplot(cor_report_dr$cor,names.arg = cor_report_dr$name)
+
+```
+
+
+
+
+## Recover
+
+```{r, echo=F}
+x_de =  de$recover[x_start:x_end]
+cor_de = cor.test(x_de,y_de)
+
+x_it = it$recover[x_start:x_end]
+cor_it = cor.test(x_it,y_it)
+
+x_hi = hi$recover[x_start:x_end]
+cor_hi = cor.test(x_hi,y_hi)
+
+x_ja = ja$recover[x_start:x_end]
+cor_ja = cor.test(x_ja,y_ja)
+
+x_ko = ko$recover[x_start:x_end]
+cor_ko = cor.test(x_ko,y_ko)
+
+
+x_ru = ru$recover[x_start:x_end]
+cor_ru = cor.test(x_ru,y_ru)
+
+cor_report_rec = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
+                        name = c("de","hi","it","ja","ko","ru"), 
+                        low = c(cor_de$conf.int[1],cor_hi$conf.int[1], cor_it$conf.int[1], cor_ja$conf.int[1], cor_ko$conf.int[1], cor_ru$conf.int[1]),
+                        up = c(cor_de$conf.int[2], cor_hi$conf.int[2], cor_it$conf.int[2], cor_ja$conf.int[2], cor_ko$conf.int[2],cor_ru$conf.int[2]),
+                        pvalue = c(cor_de$p.value,cor_hi$p.value, cor_it$p.value,cor_ja$p.value, cor_ko$p.value,cor_ru$p.value),stringsAsFactors = F)
+#cor_report_dr
+write.csv(cor_report_rec,file="./data/results/Recover_self_google.csv")
+barplot(cor_report_rec$cor,names.arg = cor_report_rec$name)
+
+```
+
+## Overall
+```{r}
+plot_dat<-data.frame(cor = c(cor_report_cf$cor,cor_report_cfd$cor,cor_report_d$cor,cor_report_dd$cor,cor_report_cdr$cor,cor_report_dr$cor,cor_report_rec$cor),
+                     pvalue = c(cor_report_cf$pvalue,cor_report_cfd$pvalue,cor_report_d$pvalue,cor_report_dd$pvalue,cor_report_cdr$pvalue,cor_report_dr$pvalue,cor_report_rec$pvalue),
+                       name = c(cor_report_cf$name,cor_report_cfd$name,cor_report_d$name,cor_report_dd$name,cor_report_cdr$name,cor_report_dr$name,cor_report_rec$name),
+                       type = c(rep("Confirm",6),rep("Confirm_daily",6),rep("Death",6),rep("Death_daily",6),rep("ConfDR",6),rep("DeathR",6),rep("Recover",6)))
+
+ggplot(plot_dat,aes(x=type,y = cor)) + geom_line(aes(group=name,colour=name))+ geom_point(aes(colour=name))
+ggplot(plot_dat,aes(x=type,y = pvalue)) + geom_line(aes(group=name,colour=name))+ geom_point(aes(colour=name))
+
+```

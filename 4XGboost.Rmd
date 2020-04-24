@@ -1,0 +1,250 @@
+---
+title: "4XGBoost"
+author: "Guirong Fu"
+date: "April 22, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+rm(list=ls())
+library(dplyr)
+library(glmnet)
+library(xgboost)
+library(Matrix)
+library(stringr)
+set.seed(1996)
+#library(DiagrammeR)
+#install.packages("DiagrammeR")
+#install.packages("xgboost")
+```
+
+
+## Read data
+
+```{r}
+path_s<-paste0(getwd(),"/data/Nodes/features/")
+files_s<-dir(path_s)
+it = read.csv(paste0(path_s,files_s[21]),stringsAsFactors = F)
+hi = read.csv(paste0(path_s,files_s[20]),stringsAsFactors = F)
+ja = read.csv(paste0(path_s,files_s[22]),stringsAsFactors = F)
+ko = read.csv(paste0(path_s,files_s[23]),stringsAsFactors = F)
+ru = read.csv(paste0(path_s,files_s[24]),stringsAsFactors = F)
+de = read.csv(paste0(path_s,files_s[12]),stringsAsFactors = F)
+
+google_it = read.csv("./data/Google/italy.csv",stringsAsFactors = F,header = FALSE)
+google_de = read.csv("./data/Google/germany.csv",stringsAsFactors = F,header = FALSE)
+google_hi = read.csv("./data/Google/india.csv",stringsAsFactors = F,header = FALSE)
+google_ru = read.csv("./data/Google/russia.csv",stringsAsFactors = F,header = FALSE)
+google_ja = read.csv("./data/Google/japan.csv",stringsAsFactors = F,header = FALSE)
+google_ko = read.csv("./data/Google/southkorea.csv",stringsAsFactors = F,header = FALSE)
+
+
+t_files = dir(paste0(getwd(),"/data/"))
+target_file = t_files[grep("\\d?TweetsStatistics.csv",t_files)]
+
+target = read.csv(paste0(getwd(),"/data/",target_file[1]))
+```
+
+## XGboost on Twitter
+
+### Training
+
+```{r, include=FALSE}
+XGboostModel<-function(dat,y){
+  # data = it[18:nrow(it),2:ncol(it)] # 2.8
+  #=target[name]# 02.09
+  if(length(y)>nrow(dat)){
+    y = y[1:nrow(dat)]
+  }
+  ttl_len = length(y)
+  test_len = floor(ttl_len*0.3)
+
+  X_train = dat[1:(ttl_len-test_len),]
+  y_train = y[1:(ttl_len-test_len)]
+  X_test = dat[(ttl_len-test_len+1):ttl_len,]
+  y_test = y[(ttl_len-test_len+1):ttl_len]
+
+  train_data = xgb.DMatrix(data = X_train, label = y_train) 
+  xgb <- xgboost(data = train_data, colsample_bytree=1, gamma=5,subsample=0.2,
+       max_depth = 3, eta = 0.2,  objective='reg:squarederror', nround=10, verbose = 0)
+  test_data = xgb.DMatrix(data=X_test,label = y_test)
+  return(list(xgb,test_data, y_test))
+  
+}
+```
+
+
+```{r, include=FALSE}
+x_start = 18
+x_end = 90 # 2.8 - 4.20
+
+data = as.matrix(it[x_start:x_end,2:ncol(it)])
+res_it = XGboostModel(data,target$it)
+xgb_it = res_it[[1]]
+test_it = res_it[[2]]
+y_test_it = res_it[[3]]
+
+#cv<-xgb.cv(data=data, label =target$it, colsample_bytree=1, nfold=5, gamma=5,subsample=0.2,
+#       max_depth = 3, eta = 0.2,  objective='reg:squarederror', nround=10, verbose = 2)
+#print(cv)
+
+data = as.matrix(de[x_start:x_end,2:ncol(de)])
+res_de = XGboostModel(data,target$de)
+xgb_de = res_de[[1]]
+test_de = res_de[[2]]
+y_test_de = res_de[[3]]
+
+data = as.matrix(ko[x_start:x_end,2:ncol(ko)])
+res_ko = XGboostModel(data,target$ko)
+xgb_ko = res_ko[[1]]
+test_ko = res_ko[[2]]
+y_test_ko = res_ko[[3]]
+
+data = as.matrix(ru[x_start:x_end,2:ncol(ru)])
+res_ru = XGboostModel(data,target$ru)
+xgb_ru = res_ru[[1]]
+test_ru = res_ru[[2]]
+y_test_ru = res_ru[[3]]
+
+data = as.matrix(ja[x_start:x_end,2:ncol(ja)])
+res_ja = XGboostModel(data,target$ja)
+xgb_ja = res_ja[[1]]
+test_ja = res_ja[[2]]
+y_test_ja = res_ja[[3]]
+
+data = as.matrix(hi[x_start:x_end,2:ncol(hi)])
+res_hi = XGboostModel(data,target$hi)
+xgb_hi = res_hi[[1]]
+test_hi = res_hi[[2]]
+y_test_hi = res_hi[[3]]
+
+```
+
+### Checking
+
+```{r}
+xgb.plot.importance(xgb.importance(model=xgb_de),main="de")
+xgb.plot.importance(xgb.importance(model=xgb_it),main="it")
+xgb.plot.importance(xgb.importance(model=xgb_hi),main="hi")
+xgb.plot.importance(xgb.importance(model=xgb_ja),main="ja")
+xgb.plot.importance(xgb.importance(model=xgb_ko),main="ko")
+xgb.plot.importance(xgb.importance(model=xgb_ru),main="ru")
+
+```
+
+
+### Testing
+
+```{r}
+
+y_pred_it_it = predict(xgb_it,test_it)
+y_pred_de_de = predict(xgb_de,test_de)
+y_pred_ko_ko = predict(xgb_ko,test_ko)
+y_pred_ru_ru = predict(xgb_ru,test_ru)
+y_pred_ja_ja = predict(xgb_ja,test_ja)
+y_pred_hi_hi = predict(xgb_hi,test_hi)
+
+mse_it = sqrt(mean((y_test_it-y_pred_it_it)^2))/mean(y_test_it)
+mse_de = sqrt(mean((y_test_de-y_pred_de_de)^2))/mean(y_test_de)
+mse_hi = sqrt(mean((y_test_hi-y_pred_hi_hi)^2))/mean(y_test_hi)
+mse_ja = sqrt(mean((y_test_ja-y_pred_ja_ja)^2))/mean(y_test_ja)
+mse_ko = sqrt(mean((y_test_ko-y_pred_ko_ko)^2))/mean(y_test_ko)
+mse_ru = sqrt(mean((y_test_ru-y_pred_ru_ru)^2))/mean(y_test_ru)
+
+c(mse_it,mse_de,mse_hi,mse_ja,mse_ko,mse_ru)
+
+
+```
+
+
+
+## XGboost on Google
+
+### Training
+
+
+```{r, include=FALSE}
+x_start = 1 # 1.22
+x_end = 90 # 4.20
+y_start = 2 # 1.22
+y_end = 91 # 4.20
+
+data = as.matrix(it[x_start:x_end,2:ncol(it)])
+res_it = XGboostModel(data,google_it$V2[y_start:y_end])
+xgb_it = res_it[[1]]
+test_it = res_it[[2]]
+y_test_it = res_it[[3]]
+
+#cv<-xgb.cv(data=data, label =google_it$V2[y_start:y_end], colsample_bytree=0.2, nfold=5, gamma=5,subsample=0.2,
+#       max_depth = 3, eta = 0.2,  objective='reg:squarederror', nround=10, verbose = 2)
+#print(cv)
+
+data = as.matrix(de[x_start:x_end,2:ncol(de)])
+res_de = XGboostModel(data,google_de$V2[y_start:y_end])
+xgb_de = res_de[[1]]
+test_de = res_de[[2]]
+y_test_de = res_de[[3]]
+
+data = as.matrix(ko[x_start:x_end,2:ncol(ko)])
+res_ko = XGboostModel(data,google_ko$V2[y_start:y_end])
+xgb_ko = res_ko[[1]]
+test_ko = res_ko[[2]]
+y_test_ko = res_ko[[3]]
+
+data = as.matrix(ru[x_start:x_end,2:ncol(ru)])
+res_ru = XGboostModel(data,google_ru$V2[y_start:y_end])
+xgb_ru = res_ru[[1]]
+test_ru = res_ru[[2]]
+y_test_ru = res_ru[[3]]
+
+data = as.matrix(ja[x_start:x_end,2:ncol(ja)])
+res_ja = XGboostModel(data,google_ja$V2[y_start:y_end])
+xgb_ja = res_ja[[1]]
+test_ja = res_ja[[2]]
+y_test_ja = res_ja[[3]]
+
+data = as.matrix(hi[x_start:x_end,2:ncol(hi)])
+res_hi = XGboostModel(data,google_hi$V2[y_start:y_end])
+xgb_hi = res_hi[[1]]
+test_hi = res_hi[[2]]
+y_test_hi = res_hi[[3]]
+
+```
+
+### Checking
+
+```{r}
+xgb.plot.importance(xgb.importance(model=xgb_de),main="de")
+xgb.plot.importance(xgb.importance(model=xgb_it),main="it")
+xgb.plot.importance(xgb.importance(model=xgb_hi),main="hi")
+xgb.plot.importance(xgb.importance(model=xgb_ja),main="ja")
+xgb.plot.importance(xgb.importance(model=xgb_ko),main="ko")
+xgb.plot.importance(xgb.importance(model=xgb_ru),main="ru")
+
+```
+
+
+### Testing
+
+```{r}
+
+y_pred_it_it = predict(xgb_it,test_it)
+y_pred_de_de = predict(xgb_de,test_de)
+y_pred_ko_ko = predict(xgb_ko,test_ko)
+y_pred_ru_ru = predict(xgb_ru,test_ru)
+y_pred_ja_ja = predict(xgb_ja,test_ja)
+y_pred_hi_hi = predict(xgb_hi,test_hi)
+
+mse_it = sqrt(mean((y_test_it-y_pred_it_it)^2))
+mse_de = sqrt(mean((y_test_de-y_pred_de_de)^2))
+mse_hi = sqrt(mean((y_test_hi-y_pred_hi_hi)^2))
+mse_ja = sqrt(mean((y_test_ja-y_pred_ja_ja)^2))
+mse_ko = sqrt(mean((y_test_ko-y_pred_ko_ko)^2))
+mse_ru = sqrt(mean((y_test_ru-y_pred_ru_ru)^2))
+
+c(mse_it,mse_de,mse_hi,mse_ja,mse_ko,mse_ru)
+
+
+```
+
+
