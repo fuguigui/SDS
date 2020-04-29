@@ -1,0 +1,298 @@
+---
+title: "5Strength Hypothesis"
+author: "Guirong Fu"
+date: "April 25, 2020"
+output: html_document
+---
+
+# Twitter 
+```{r setup, include=FALSE}
+rm(list=ls())
+library(dplyr)
+library(xgboost)
+library(Matrix)
+library(stringr)
+library(ggplot2)
+library(rjson)
+library(jsonlite)
+source("./lib/utils.R")
+```
+
+```{r, include=F}
+
+date_start = 18 # 2.8
+date_end = 90 # 4.20
+
+```
+
+## Read data
+
+```{r, include=FALSE}
+path_s<-paste0(getwd(),"/data/Nodes/features/")
+files_s<-dir(path_s)
+it = read.csv(paste0(path_s,"It.csv"),stringsAsFactors = F)
+hi = read.csv(paste0(path_s,"Hi.csv"),stringsAsFactors = F)
+ja = read.csv(paste0(path_s,"Ja.csv"),stringsAsFactors = F)
+ko = read.csv(paste0(path_s,"Ko.csv"),stringsAsFactors = F)
+ru = read.csv(paste0(path_s,"Ru.csv"),stringsAsFactors = F)
+de = read.csv(paste0(path_s,"De.csv"),stringsAsFactors = F)
+
+short_paths<-read.csv(paste0(getwd(),"/data/Nodes/shortest_path.csv"))
+target = read.csv(paste0(getwd(),"/data/0421TweetsStatistics.csv"))
+
+
+y_de = target$de # 2.9 - 4.21
+y_it = target$it
+y_hi = target$hi
+y_ja = target$ja
+y_ko = target$ko
+y_ru = target$ru
+
+```
+
+
+## DeathR
+
+```{r, echo=FALSE}
+x_de = de$DeathR[date_start:date_end]
+cor_de = cor.test(x_de,y_de)
+#cor.test(y_de,de$DeathR[date_start:date_end])
+#cor.test(y_de[2:length(y_de)],y_de[1:(length(y_de)-1)])
+
+x_it = it$DeathR[date_start:date_end]
+cor_it = cor.test(x_it,y_it)
+
+x_hi = hi$DeathR[date_start:date_end]
+cor_hi = cor.test(x_hi,y_hi)
+
+x_ja = ja$DeathR[date_start:date_end]
+cor_ja = cor.test(x_ja,y_ja)
+
+x_ko = ko$DeathR[date_start:date_end]
+cor_ko = cor.test(x_ko,y_ko)
+
+
+x_ru = ru$DeathR[date_start:date_end]
+cor_ru = cor.test(x_ru,y_ru)
+
+cor_report_conf = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
+                        name = c("de","hi","it","ja","ko","ru"), 
+                        low = c(cor_de$conf.int[1],cor_hi$conf.int[1], cor_it$conf.int[1], cor_ja$conf.int[1], cor_ko$conf.int[1], cor_ru$conf.int[1]),
+                        up = c(cor_de$conf.int[2], cor_hi$conf.int[2], cor_it$conf.int[2], cor_ja$conf.int[2], cor_ko$conf.int[2],cor_ru$conf.int[2]),
+                        pvalue = c(cor_de$p.value,cor_hi$p.value, cor_it$p.value,cor_ja$p.value, cor_ko$p.value,cor_ru$p.value),stringsAsFactors = F)
+write.csv(cor_report_conf,file="./data/results/Final_DeathR_twitter.csv")
+cor_report_conf
+```
+
+
+## Confirm
+
+```{r, echo=F}
+x_de = de$confirm[date_start:date_end]
+cor_de = cor.test(x_de,y_de)
+
+x_it = it$confirm[date_start:date_end]
+cor_it = cor.test(x_it,y_it)
+
+x_hi = hi$confirm[date_start:date_end]
+cor_hi = cor.test(x_hi,y_hi)
+
+x_ja = ja$confirm[date_start:date_end]
+cor_ja = cor.test(x_ja,y_ja)
+
+x_ko = ko$confirm[date_start:date_end]
+cor_ko = cor.test(x_ko,y_ko)
+
+
+x_ru = ru$confirm[date_start:date_end]
+cor_ru = cor.test(x_ru,y_ru)
+
+cor_report_confirm = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
+                        name = c("de","hi","it","ja","ko","ru"), 
+                        low = c(cor_de$conf.int[1],cor_hi$conf.int[1], cor_it$conf.int[1], cor_ja$conf.int[1], cor_ko$conf.int[1], cor_ru$conf.int[1]),
+                        up = c(cor_de$conf.int[2], cor_hi$conf.int[2], cor_it$conf.int[2], cor_ja$conf.int[2], cor_ko$conf.int[2],cor_ru$conf.int[2]),
+                        pvalue = c(cor_de$p.value,cor_hi$p.value, cor_it$p.value,cor_ja$p.value, cor_ko$p.value,cor_ru$p.value),stringsAsFactors = F)
+write.csv(cor_report_confirm,file="./data/results/Final_confirm_twitter.csv")
+cor_report_confirm
+```
+
+## All index
+```{r}
+AllIndexCor<-function(dat,y,date_start,date_end,cols){
+  ests = rep(0,length(cols))
+  pvals = rep(0,length(cols))
+  i = 1
+  for(c in cols){
+    x = dat[[c]][date_start:date_end]
+    cor_res = cor.test(x,y)
+    ests[i] = cor_res$estimate
+    pvals[i] = cor_res$p.value
+    i = i+1
+  }
+  return(data.frame(cor = ests,pvalue = pvals,name = cols,stringsAsFactors = F))
+}
+cols=c("confirm","recover","death","confirm_daily","recover_daily","death_daily","Exists","ConfDR","DeathR","HealR","RiskD","RiskT")
+cor_ru<-AllIndexCor(ru,y_ru,date_start,date_end,cols)
+cor_de<-AllIndexCor(de,y_de,date_start,date_end,cols)
+cor_it<-AllIndexCor(it,y_it,date_start,date_end,cols)
+cor_hi<-AllIndexCor(hi,y_hi,date_start,date_end,cols)
+cor_ja<-AllIndexCor(ja,y_ja,date_start,date_end,cols)
+cor_ko<-AllIndexCor(ko,y_ko,date_start,date_end,cols)
+
+plot_tweet = rbind(cor_ru,cor_de,cor_it,cor_hi,cor_ja,cor_ko)
+plot_tweet["country"]=c(rep("Ru",length(cols)),rep("De",length(cols)),rep("It",length(cols)),rep("Hi",length(cols)),rep("Ja",length(cols)),rep("Ko",length(cols)))
+
+
+pdf(file="./pic/strength_twitter.pdf",width=15,height=10)
+g1<-ggplot(plot_tweet,aes(x=name,y = cor))+ geom_line(aes(group=country,colour=country))+ggtitle("Cor Test Estimated")+ geom_point(aes(colour=country)) #+ geom_ribbon(aes(ymin = lower,group=name, ymax=upper),alpha=.2)
+g2<-ggplot(plot_tweet,aes(x=name,y = pvalue))+geom_line(aes(group=country,colour=country))+geom_point(aes(colour=country))+ggtitle("Cor Test P-value")
+
+multiplot(g1,g2)
+dev.off()
+
+```
+# Google
+
+
+## Read data
+
+```{r, include=FALSE}
+
+getwd() %>% paste0("/data/")->path
+files=dir(path)
+covid = files[grep("[0-9]?covid\\s?",files)]
+
+covid_confirm<-ReadCovid(covid[1])
+covid_deadnum<-ReadCovid(covid[2])
+covid_recover<-ReadCovid(covid[3])
+
+dates = rownames(covid_confirm)
+
+pop_dat<-fromJSON(paste0(readLines(paste0(path,"world_population.json"))))
+pop_dat$country
+
+it = data.frame(confirm = covid_confirm[,"Italy"], death = covid_deadnum[,"Italy"], recover= covid_recover[,"Italy"], stringsAsFactors = F)
+it = ExtractStrengthFeature(it, as.numeric(pop_dat$population[pop_dat$country=="Italy"]))
+target_it = read.csv("./data/Google/italy.csv",stringsAsFactors = F,header = FALSE)
+
+de = data.frame(confirm = covid_confirm[,"Germany"], death = covid_deadnum[,"Germany"], recover= covid_recover[,"Germany"], stringsAsFactors = F)
+de = ExtractStrengthFeature(de, as.numeric(pop_dat$population[pop_dat$country=="Germany"]))
+target_de = read.csv("./data/Google/germany.csv",stringsAsFactors = F,header = FALSE)
+
+
+hi = data.frame(confirm = covid_confirm[,"India"], death = covid_deadnum[,"India"], recover= covid_recover[,"India"], stringsAsFactors = F)
+hi = ExtractStrengthFeature(hi, as.numeric(pop_dat$population[pop_dat$country=="India"]))
+target_hi = read.csv("./data/Google/india.csv",stringsAsFactors = F,header = FALSE)
+
+ja = data.frame(confirm = covid_confirm[,"Japan"], death = covid_deadnum[,"Japan"], recover= covid_recover[,"Japan"], stringsAsFactors = F)
+ja = ExtractStrengthFeature(ja, as.numeric(pop_dat$population[pop_dat$country=="Japan"]))
+target_ja = read.csv("./data/Google/japan.csv",stringsAsFactors = F,header = FALSE)
+
+ru = data.frame(confirm = covid_confirm[,"Russia"], death = covid_deadnum[,"Russia"], recover= covid_recover[,"Russia"], stringsAsFactors = F)
+ru = ExtractStrengthFeature(ru, as.numeric(pop_dat$population[pop_dat$country=="Russian Federation"]))
+target_ru = read.csv("./data/Google/russia.csv",stringsAsFactors = F,header = FALSE)
+
+ko = data.frame(confirm = covid_confirm[,"Korea, South"], death = covid_deadnum[,"Korea, South"], recover= covid_recover[,"Korea, South"], stringsAsFactors = F)
+ko = ExtractStrengthFeature(ko, as.numeric(pop_dat$population[pop_dat$country=="South Korea"]))
+target_ko = read.csv("./data/Google/southkorea.csv",stringsAsFactors = F,header = FALSE)
+
+x_start=1 # 1.22
+x_end=90 # 4.20
+y_start = 2 # 1.22
+y_end = 91 # 4.20
+
+
+y_de = target_de$V2[y_start:y_end]
+y_it = target_it$V2[y_start:y_end]
+y_ja = target_ja$V2[y_start:y_end]
+y_ko = target_ko$V2[y_start:y_end]
+y_hi = target_hi$V2[y_start:y_end]
+y_ru = target_ru$V2[y_start:y_end]
+```
+
+## DeathR
+
+
+```{r, echo=F}
+
+x_de = de$DeathR[x_start:x_end]
+cor_de = cor.test(x_de,y_de)
+
+x_it = it$DeathR[x_start:x_end]
+cor_it = cor.test(x_it,y_it)
+
+x_hi = hi$DeathR[x_start:x_end]
+cor_hi = cor.test(x_hi,y_hi)
+
+x_ja = ja$DeathR[x_start:x_end]
+cor_ja = cor.test(x_ja,y_ja)
+
+x_ko = ko$DeathR[x_start:x_end]
+cor_ko = cor.test(x_ko,y_ko)
+
+
+x_ru = ru$DeathR[x_start:x_end]
+cor_ru = cor.test(x_ru,y_ru)
+
+cor_report_cfd = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
+                        name = c("de","hi","it","ja","ko","ru"), 
+                        low = c(cor_de$conf.int[1],cor_hi$conf.int[1], cor_it$conf.int[1], cor_ja$conf.int[1], cor_ko$conf.int[1], cor_ru$conf.int[1]),
+                        up = c(cor_de$conf.int[2], cor_hi$conf.int[2], cor_it$conf.int[2], cor_ja$conf.int[2], cor_ko$conf.int[2],cor_ru$conf.int[2]),
+                        pvalue = c(cor_de$p.value,cor_hi$p.value, cor_it$p.value,cor_ja$p.value, cor_ko$p.value,cor_ru$p.value),stringsAsFactors = F)
+cor_report_cfd
+write.csv(cor_report_cfd,file="./data/results/Final_DeathR_google.csv")
+```
+
+
+## Confirm
+
+```{r, echo=F}
+x_de = de$confirm[x_start:x_end]
+cor_de = cor.test(x_de,y_de)
+
+x_it = it$confirm[x_start:x_end]
+cor_it = cor.test(x_it,y_it)
+
+x_hi = hi$confirm[x_start:x_end]
+cor_hi = cor.test(x_hi,y_hi)
+
+x_ja = ja$confirm[x_start:x_end]
+cor_ja = cor.test(x_ja,y_ja)
+
+x_ko = ko$confirm[x_start:x_end]
+cor_ko = cor.test(x_ko,y_ko)
+
+
+x_ru = ru$confirm[x_start:x_end]
+cor_ru = cor.test(x_ru,y_ru)
+
+cor_report_dd = data.frame(cor = c(cor_de$estimate,cor_hi$estimate, cor_it$estimate,cor_ja$estimate, cor_ko$estimate, cor_ru$estimate), 
+                        name = c("de","hi","it","ja","ko","ru"), 
+                        low = c(cor_de$conf.int[1],cor_hi$conf.int[1], cor_it$conf.int[1], cor_ja$conf.int[1], cor_ko$conf.int[1], cor_ru$conf.int[1]),
+                        up = c(cor_de$conf.int[2], cor_hi$conf.int[2], cor_it$conf.int[2], cor_ja$conf.int[2], cor_ko$conf.int[2],cor_ru$conf.int[2]),
+                        pvalue = c(cor_de$p.value,cor_hi$p.value, cor_it$p.value,cor_ja$p.value, cor_ko$p.value,cor_ru$p.value),stringsAsFactors = F)
+cor_report_dd
+write.csv(cor_report_dd,file="./data/results/Final_confirm_google.csv")
+
+```
+
+## All index
+```{r}
+cor_ru<-AllIndexCor(ru,y_ru,x_start,x_end,cols)
+cor_de<-AllIndexCor(de,y_de,x_start,x_end,cols)
+cor_it<-AllIndexCor(it,y_it,x_start,x_end,cols)
+cor_hi<-AllIndexCor(hi,y_hi,x_start,x_end,cols)
+cor_ja<-AllIndexCor(ja,y_ja,x_start,x_end,cols)
+cor_ko<-AllIndexCor(ko,y_ko,x_start,x_end,cols)
+
+plot_tweet = rbind(cor_ru,cor_de,cor_it,cor_hi,cor_ja,cor_ko)
+plot_tweet["country"]=c(rep("Ru",length(cols)),rep("De",length(cols)),rep("It",length(cols)),rep("Hi",length(cols)),rep("Ja",length(cols)),rep("Ko",length(cols)))
+
+
+pdf(file="./pic/strength_google.pdf",width=15,height=10)
+g1<-ggplot(plot_tweet,aes(x=name,y = cor))+ geom_line(aes(group=country,colour=country))+ggtitle("Cor Test Estimated")+ geom_point(aes(colour=country)) #+ geom_ribbon(aes(ymin = lower,group=name, ymax=upper),alpha=.2)
+g2<-ggplot(plot_tweet,aes(x=name,y = pvalue))+geom_line(aes(group=country,colour=country))+geom_point(aes(colour=country))+ggtitle("Cor Test P-value")
+
+multiplot(g1,g2)
+dev.off()
+```
