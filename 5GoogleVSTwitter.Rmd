@@ -1,0 +1,158 @@
+---
+title: "R Notebook"
+author: "Haojun Cai"
+date: "25/4/2020"
+output: html_notebook
+---
+
+**This script is to plot the Google and Twitter impacts in the same figure by target country.**
+
+```{r}
+rm(list=ls())
+```
+
+
+# Read data
+
+```{r}
+# CHOOSE TIME DURATION IN 02.09-04.21
+GoogleTrends_chosen_date = c(20:92) 
+
+regions = c("Hi","Ko","Ru","Ja","De","It")
+
+# Read Google impacts
+HiGoogleTrend <- read.csv("./Data/Google/india.csv",header=FALSE)
+KoGoogleTrend <- read.csv("./Data/Google/southkorea.csv",header=FALSE)
+RuGoogleTrend <- read.csv("./Data/Google/russia.csv",header=FALSE)
+JaGoogleTrend <- read.csv("./Data/Google/japan.csv",header=FALSE)
+DeGoogleTrend <- read.csv("./Data/Google/germany.csv",header=FALSE)
+ItGoogleTrend <- read.csv("./Data/Google/italy.csv",header=FALSE)
+HiGoogleImpact = HiGoogleTrend[GoogleTrends_chosen_date,]
+KoGoogleImpact = KoGoogleTrend[GoogleTrends_chosen_date,]
+RuGoogleImpact = RuGoogleTrend[GoogleTrends_chosen_date,]
+JaGoogleImpact = JaGoogleTrend[GoogleTrends_chosen_date,]
+DeGoogleImpact = DeGoogleTrend[GoogleTrends_chosen_date,]
+ItGoogleImpact = ItGoogleTrend[GoogleTrends_chosen_date,]
+
+# Read Twitter impacts
+AllTwitterImpact <- read.csv("./Data/0421TweetsStatistics.csv")
+HiTwitterImpact = AllTwitterImpact$hi
+KoTwitterImpact = AllTwitterImpact$ko
+RuTwitterImpact = AllTwitterImpact$ru
+JaTwitterImpact = AllTwitterImpact$ja
+DeTwitterImpact = AllTwitterImpact$de
+ItTwitterImpact = AllTwitterImpact$it
+```
+
+
+# Calculate correlation btw Google and Twitter impacts
+
+```{r}
+cor = c()
+pval = c()
+
+for (region in regions){
+  GoogleVar = paste(region,"GoogleImpact",sep="")
+  GoogleImpact = get(GoogleVar)
+  TwitterVar = paste(region,"TwitterImpact",sep="")
+  TwitterImpact = get(TwitterVar)
+  
+  sumry = cor.test(GoogleImpact$V2,TwitterImpact)
+  corRegion= sumry$estimate
+  pvalue = sumry$p.value
+  
+  cor = append(cor,corRegion)
+  pval = append(pval,pvalue)
+}
+
+cor_matrix <- matrix(cor, ncol=length(regions), byrow=TRUE)
+corGoogleTwitter <- as.data.frame(cor_matrix, stringsAsFactors=FALSE)
+colnames(corGoogleTwitter) = regions
+
+pval_matrix <- matrix(pval, ncol=length(regions), byrow=TRUE)
+pValue <- as.data.frame(pval_matrix, stringsAsFactors=FALSE)
+colnames(pValue) = regions
+
+print(corGoogleTwitter)
+print(pValue)
+print(corGoogleTwitter[order(corGoogleTwitter[1,])]) # sort in ascending order
+```
+
+
+# Plot the figrue and save in .png format
+
+```{r}
+# png("./pic/It_GTComparison.png",height=350,width=700)
+
+# Choose the region to plot
+region = "Ja"
+
+GoogleVar = paste(region,"GoogleImpact",sep="")
+GoogleImpact = get(GoogleVar)
+TwitterVar = paste(region,"TwitterImpact",sep="")
+TwitterImpact = get(TwitterVar)
+
+# Set dates
+dates = seq(as.Date('2020-02-09'),as.Date('2020-04-21'),by=1) 
+time <- dates
+
+# Add extra space to right margin of plot within frame
+par(mar=c(5,4,4,6)+0.1)
+
+# Plot first set of data and draw its axis
+regionsFullName = c("Indian","South Korean","Russian","Japanese","German","Italian")
+title = paste(regionsFullName[which(regions==region)]," Impacts of COVID-19 on Google and Twitter",sep="")
+plot(time, GoogleImpact$V2,axes=FALSE,ylim=c(0,100),xlab="",ylab="",type="l",col="black",main=title)
+axis(2, ylim=c(0,100),col="black",las=1)
+mtext("Google Impact",side=2,line=2.5)
+box()
+
+# Allow a second plot on the same graph
+par(new=TRUE)
+
+# Plot the second plot and put axis scale on right
+plot(time,TwitterImpact,xlab="",ylab="",ylim=c(0,max(TwitterImpact)), 
+    axes=FALSE,type="l",col="red",lty=2)
+mtext("Twitter Impact",side=4,col="red",line=4) 
+axis(4,ylim=c(0,max(TwitterImpact)),col="red",col.axis="red",las=1)
+
+# Draw the time axis
+axis.Date(1,at=seq(as.Date("2020/2/10"),max(time)+6,"weeks"))
+axis.Date(1,at=seq(as.Date("2020/2/10"),max(time)+6,"days"),
+     labels = FALSE, tcl = -0.2)
+
+# Add Legend
+legend("topleft",legend=c("Google Impact","Twitter Impact"),
+  text.col=c("black","red"),col=c("black","red"),lty=1:2,cex=0.8)
+
+# dev.off()
+```
+
+
+# Further exploration
+
+```{r}
+library(dplyr)
+library(rtweet)
+```
+
+
+```{r}
+api_key <- "wGviTlE2AfSxux4NkHrf3BNmm"
+api_secret_key <- "ERF3xbetPMgAu0DNoSzJdBr6fwRAtuIBqU8SJq107bMytivsBG"
+
+token <- create_token(
+  app = "HaojunApp",
+  consumer_key = api_key,
+  consumer_secret = api_secret_key)
+```
+
+
+```{r}
+load("./Data/Tweet0229ja.RData")
+statuses <- c(tweets$status_id[seq(5, 2.3e5, 5e3)])
+tw <- lookup_statuses(statuses)
+tw$text
+```
+
+
