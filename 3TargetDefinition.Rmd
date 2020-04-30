@@ -7,12 +7,13 @@ output: html_document
 
 ```{r setup}
 rm(list=ls())
+library(dplyr)
 ```
 
 
 ```{r}
 LanguageTweetImpact<-function(lang_zone){
-  getwd() %>% paste0("/data/")->path
+  getwd()%>% paste0("/data/")->path
   lfiles = dir(paste0(path,lang_zone))
   amounts<-rep(0,length(lfiles))
   i=1
@@ -24,6 +25,35 @@ LanguageTweetImpact<-function(lang_zone){
   amounts
 }
 
+EnTweetImpact<-function(){
+  path<-paste0(getwd(),"/data/")
+  lfiles = dir(path)
+  en_files = lfiles[grep("\\s?.RData",lfiles)]
+  amounts<-rep(0,length(en_files))
+  i=1
+  for(fname in en_files){
+    load(paste0(path,fname))
+    cnt = nrow(tweets)
+    t<-as.POSIXlt(tweets$created_at)
+    t_diff<-as.double(max(t)-min(t))
+    if(t_diff<11){
+      amounts[i]<-ceiling(cnt/t_diff*12)
+    }
+    else{
+      amounts[i]<-cnt
+    }
+    i = i+1
+  }
+  amounts
+}
+
+```
+
+## Language zones
+
+### Old keywords
+
+```{r}
 itamount<-LanguageTweetImpact("it/")
 deamount<-LanguageTweetImpact("de/")
 koamount<-LanguageTweetImpact("ko/")
@@ -31,8 +61,149 @@ ruamount<-LanguageTweetImpact("ru/")
 jaamount<-LanguageTweetImpact("ja/")
 hiamount<-LanguageTweetImpact("hi/")
 
-dates<-gsub("[^0-9]","",itfiles)
+
 amount<-data.frame(it=itamount,de=deamount,ko=koamount,ru=ruamount,ja=jaamount,hi = hiamount)
 rownames(amount)<-dates
-write.csv(amount,file = "./data/0405TweetsStatistics.csv")
+write.csv(amount,file = "./data/0420TweetsStatistics.csv")
 ```
+### New Keywords
+
+```{r}
+itamount<-LanguageTweetImpact("new/it/")
+deamount<-LanguageTweetImpact("new/de/")
+koamount<-LanguageTweetImpact("new/ko/")
+ruamount<-LanguageTweetImpact("new/ru/")
+jaamount<-LanguageTweetImpact("new/ja/")
+hiamount<-LanguageTweetImpact("new/hi/")
+
+
+amount<-data.frame(it=itamount,de=deamount,ko=koamount,ru=ruamount,ja=jaamount,hi = hiamount[1:19])
+getwd()%>% paste0("/data/new")->path
+lfiles = dir(paste0(path,"/it/"))
+dates = sapply(lfiles, gsub,pattern = "\\D+",  replacement = "" )
+  
+rownames(amount)<-dates
+write.csv(amount,file = "./data/0420NewTweetsStatistics.csv")
+```
+
+
+## English 
+
+```{r}
+enamount<-EnTweetImpact()
+
+plot(enamount,type="l")
+
+tbl<-read.csv( "./data/0406TweetsStatistics.csv")
+amount<-cbind(tbl,enamount)
+tbl<-tbl[,2:8]
+head(tbl)
+rownames(tbl)<-tbl$X
+write.csv(tbl,file = "./data/0406TweetsStatistics.csv",row.names = T)
+```
+
+
+```{r}
+
+fname = en_files[1]
+load(paste0(path,fname))
+hours<-sapply(tweets$created_at,ExtractHours)
+data.frame(hours = hours)%>%group_by(hours)%>% summarise(cnt= n())->day1
+fname = en_files[2]
+load(paste0(path,fname))
+hours<-sapply(tweets$created_at,ExtractHours)
+data.frame(hours = hours)%>%group_by(hours)%>% summarise(cnt= n())->day2
+
+fname = en_files[3]
+load(paste0(path,fname))
+hours<-sapply(tweets$created_at,ExtractHours)
+data.frame(hours = hours)%>%group_by(hours)%>% summarise(cnt= n())->day3
+
+fname = en_files[4]
+load(paste0(path,fname))
+hours<-sapply(tweets$created_at,ExtractHours)
+data.frame(hours = hours)%>%group_by(hours)%>% summarise(cnt= n())->day4
+
+fname = en_files[5]
+load(paste0(path,fname))
+hours<-sapply(tweets$created_at,ExtractHours)
+data.frame(hours = hours)%>%group_by(hours)%>% summarise(cnt= n())->day5
+
+
+plot(day1,type="l",xlim=c(12,24),ylim=c(1000,14000) )
+lines(day2,col=2)
+lines(day3,col=3)
+lines(day4,col=4)
+lines(day5,col=5)
+
+```
+
+# Visualization
+```{r}
+library("ggpubr")
+ggscatter(my_data, x = "mpg", y = "wt", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Miles/(US) gallon", ylab = "Weight (1000 lbs)")
+
+tbl_old<-read.csv( "./data/0406TweetsStatistics.csv")
+tbl_new <-read.csv("./data/0420NewTweetsStatistics.csv")
+
+PlotCorResult<-function(y_old,y_new,cname){
+  cor_res = cor.test(y_old,y_new)
+  pdf(file=paste0("./pic/",cname,"_oldnew_twitter.pdf"),width=8,height=6)
+  par(mfrow=c(2,1))
+  plot(as.Date.character(dates,format="%m%d"),y_old,xlab="Date",ylab = "Daily Tweet Number (Old)",main = paste0(cname," with correlation ",cor_res$estimate), type="l")
+  plot(as.Date.character(dates,format="%m%d"), y_new,xlab="Date",ylab = "Daily Tweet Number (New)", type="l")
+  dev.off()
+  return(cor_res)
+}
+
+cor_it = PlotCorResult(tbl_old$it[22:(22+18)],tbl_new$it, "Italy")
+cor_hi = PlotCorResult(tbl_old$hi[22:(22+18)],tbl_new$hi, "India")
+cor_de = PlotCorResult(tbl_old$de[22:(22+18)],tbl_new$de, "Germany")
+cor_ja = PlotCorResult(tbl_old$ja[22:(22+18)],tbl_new$ja, "Japan")
+cor_ko = PlotCorResult(tbl_old$ko[22:(22+18)],tbl_new$ko, "Korea, South")
+cor_ru = PlotCorResult(tbl_old$ru[22:(22+18)],tbl_new$ru, "Russia")
+
+library(gridExtra)
+
+cor_tbl<-data.frame(Cor= c(round(cor_hi$estimate,5),round(cor_de$estimate,5),
+                           round(cor_ja$estimate,5),round(cor_it$estimate,5),
+                           round(cor_ko$estimate,5),round(cor_ru$estimate,5)))
+rownames(cor_tbl) = c("India","Germany","Japan","Italy","Korea, South","Russia")
+
+png("./report/cor_oldnew_twitter.png", height = 50*ncol(cor_tbl), width = 200*nrow(cor_tbl))
+p<-tableGrob(t(cor_tbl))
+grid.arrange(p)
+dev.off()
+
+```
+
+## Rectified Tweets impact
+
+```{r}
+load(file = "./data/0418TweetImpact_correctIt0403.RData")
+tbl_old<-read.csv( "./data/0406TweetsStatistics.csv",stringsAsFactors = F)
+#View(tbl_old)
+nrow(tbl_old) # 58
+FirstPadZero<-function(chars){
+  paste0("0",chars)
+}
+tbl_old$X<-sapply(tbl_old$X,FirstPadZero) # 0311 is at line 32
+nrow(impact) # 39
+end_line = 58-32+1
+tbl_old$X[32:58] == impact$init_dates[1:end_line] 
+39-end_line
+colnames(tbl_old)
+later_tbl<-data.frame(X=impact$init_dates[(end_line+1):39], it = impact$it[(end_line+1):39],de = impact$de[(end_line+1):39], ko = impact$ko[(end_line+1):39], ru = impact$ru[(end_line+1):39], ja = impact$ja[(end_line+1):39],hi = impact$hi[(end_line+1):39], enamount = rep(0,39-end_line))
+tbl_old$it[tbl_old$X=="0403"]<-impact$it[impact$init_dates=="0403"]
+tbl_old<-rbind(rbind(,39-end_line))
+tbl_all<-rbind(tbl_old,later_tbl)
+#View(tbl_all)
+write.csv(tbl_all,file="./data/0421TweetsStatistics.csv",row.names = F)
+
+```
+
+
+

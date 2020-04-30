@@ -42,24 +42,24 @@ it = ExtractStrengthFeature(it, as.numeric(pop_dat$population[pop_dat$country=="
 target_it = read.csv("./data/Google/italy.csv",stringsAsFactors = F,header = FALSE)
 
 de = data.frame(confirm = covid_confirm[,"Germany"], death = covid_deadnum[,"Germany"], recover= covid_recover[,"Germany"], stringsAsFactors = F)
-de = ExtractStrengthFeature(it, as.numeric(pop_dat$population[pop_dat$country=="Germany"]))
+de = ExtractStrengthFeature(de, as.numeric(pop_dat$population[pop_dat$country=="Germany"]))
 target_de = read.csv("./data/Google/germany.csv",stringsAsFactors = F,header = FALSE)
 
 
 hi = data.frame(confirm = covid_confirm[,"India"], death = covid_deadnum[,"India"], recover= covid_recover[,"India"], stringsAsFactors = F)
-hi = ExtractStrengthFeature(it, as.numeric(pop_dat$population[pop_dat$country=="India"]))
+hi = ExtractStrengthFeature(hi, as.numeric(pop_dat$population[pop_dat$country=="India"]))
 target_hi = read.csv("./data/Google/india.csv",stringsAsFactors = F,header = FALSE)
 
 ja = data.frame(confirm = covid_confirm[,"Japan"], death = covid_deadnum[,"Japan"], recover= covid_recover[,"Japan"], stringsAsFactors = F)
-ja = ExtractStrengthFeature(it, as.numeric(pop_dat$population[pop_dat$country=="Japan"]))
+ja = ExtractStrengthFeature(ja, as.numeric(pop_dat$population[pop_dat$country=="Japan"]))
 target_ja = read.csv("./data/Google/japan.csv",stringsAsFactors = F,header = FALSE)
 
 ru = data.frame(confirm = covid_confirm[,"Russia"], death = covid_deadnum[,"Russia"], recover= covid_recover[,"Russia"], stringsAsFactors = F)
-ru = ExtractStrengthFeature(it, as.numeric(pop_dat$population[pop_dat$country=="Russian Federation"]))
+ru = ExtractStrengthFeature(ru, as.numeric(pop_dat$population[pop_dat$country=="Russian Federation"]))
 target_ru = read.csv("./data/Google/russia.csv",stringsAsFactors = F,header = FALSE)
 
 ko = data.frame(confirm = covid_confirm[,"Korea, South"], death = covid_deadnum[,"Korea, South"], recover= covid_recover[,"Korea, South"], stringsAsFactors = F)
-ko = ExtractStrengthFeature(it, as.numeric(pop_dat$population[pop_dat$country=="South Korea"]))
+ko = ExtractStrengthFeature(ko, as.numeric(pop_dat$population[pop_dat$country=="South Korea"]))
 target_ko = read.csv("./data/Google/southkorea.csv",stringsAsFactors = F,header = FALSE)
 
 

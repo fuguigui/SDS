@@ -13,6 +13,7 @@ Solve the source definition problem
 ```{r setup}
 rm(list=ls())
 library(dplyr)
+source("./lib/utils.R")
 ```
 
 
@@ -188,29 +189,7 @@ getwd() %>% paste0("/data/")->path
 files=dir(path)
 covid = files[grep("[0-9]?covid\\s?",files)]
 
-ReadCovid<-function(fname){
-  #covid1<-as.data.frame(t(read.csv(paste0(path,fname),header = F, stringsAsFactors = F)),stringsAsFactors = F)
-  covid1<-read.csv(paste0(path,fname),header = T, stringsAsFactors = F)
-  c_names_tbl<-table(covid1$Country.Region)
-  c_names_easy<-names(c_names_tbl)[c_names_tbl<2]
-  c_names_hard<-setdiff(names(c_names_tbl),c_names_easy)
-  covid1_easy<-filter(covid1,Country.Region%in% c_names_easy)
-  covid1_hard<-filter(covid1,Country.Region%in% c_names_hard)
-  
-  for(c in c_names_hard){
-    filter(covid1_hard,Country.Region==c) %>% select(-c("Province.State","Country.Region","Lat","Long"))%>% as.matrix -> c_subs
-    c_subs = apply(c_subs, 2, as.numeric)
-    apply(c_subs,MARGIN=2,FUN=sum)->new_sub_line
-    new_line<-filter(covid1_hard,Country.Region==c)[1,]
-    new_line[5:ncol(new_line)]<-new_sub_line
-    
-    covid1_easy<-rbind(covid1_easy,new_line) 
-  }
-  covid1<-t(select(covid1_easy,-c("Province.State","Country.Region","Lat","Long")))
-  
-  colnames(covid1)<-covid1_easy$Country.Region
-  return(covid1)
-}
+
 
 NodeData<-function(dat,name,node_file){
   node_file%>% filter(Node==name)%>%select(Country.Region)->countries
@@ -237,10 +216,18 @@ AllCountryToNode<-function(covid_dat,node_names,node_info){
 }
 
 
+
+```
+
+
+```{r}
+
 covid_confirm<-ReadCovid(covid[1])
 covid_deadnum<-ReadCovid(covid[2])
 covid_recover<-ReadCovid(covid[3])
 
+geo_info_mean<-read.csv("./data/Nodes/node_member.csv",stringsAsFactors = F)
+node_geo<-read.csv("./data/Nodes/node_geo.csv",stringsAsFactors = F)
 
 node_confirm<-AllCountryToNode(covid_confirm,node_geo$Node,geo_info_mean)
 #node_confirm<-AllCountryToNode(covid_confirm,node_geo$Node,geo_info_mean)
@@ -251,6 +238,11 @@ write.csv(node_confirm,file="./data/Nodes/Confirm.csv")
 write.csv(node_deadnum,file="./data/Nodes/Death.csv")
 write.csv(node_recover,file="./data/Nodes/Recover.csv")
 
+en_confirm<-apply(covid_confirm,MARGIN = 1,sum)
+en_deadnum<-apply(covid_deadnum, 1,sum)
+en_recover<-apply(covid_recover,1, sum)
+en_data<-data.frame(confirm = en_confirm, recover = en_recover, death = en_deadnum)
+write.csv(en_data, file="./data/Nodes/en_info.csv")
 ```
 
 ```{r source-populations}
@@ -284,10 +276,10 @@ pop_dat$country[228]<-"US"
 #head(geo_info_mean)
 node_info_pop<-left_join(geo_info_mean,pop_dat,by=c("Country.Region"="country"))
 group_by(node_info_pop,Node)%>%summarise(pop_total=sum(as.numeric(population),na.rm = T))->node_pop
-
-head(node_pop)
 node_geo<-left_join(node_geo,node_pop,by="Node")
 head(node_geo)
+node_geo<-select(node_geo, Node, lat, long, pop_total.x)
+colnames(node_geo)<-c("Node","lat","long","pop_total")
 write.csv(node_geo,file="./data/Nodes/node_geo.csv")
 
 #node_info_pop$Country.Region[is.na(node_info_pop$population)]
@@ -304,7 +296,7 @@ colnames(covid_demo)<-c("confirm","recover","death")
 pop_demo<-node_geo$pop_total[node_geo$Node==nid]
 
 features_demo<-ExtractStrengthFeature(covid_demo,pop_demo)
-head(features_demo)
+View(features_demo)
 write.csv(features_demo,file = paste0("./data/Nodes/features/",nid,".csv"))
 #features_demo[30:40,]
 

@@ -1,233 +1,63 @@
----
-title: Readme
-author: Guirong Fu
-date: 2020-03-03
-update: 2020-03-03
----
+# Introduction
 
+This is the course project of Social Data Science, ETH, FS 2020, opened by David Garcia.
 
+We select the topic of checking Social Impact Theory in the COVID-19 context.
 
-## Parameter settings
+# Work
 
-api_key: VWWcdtFA3fLW92nBryikpgR8B
+Our work mainly consists of:
 
-api_secret_key: 77E6tRxJb6wafNe5fJw3iRkelnkEPurkyVqALAb2La9SqAOs07
+- data collection: build and maintain a data pipeline to collect data from Twitter API. Keep running it since February 9, 2020 until April 21, 2020.
+- hypothesis testing: we set two hypothesis, one on Strength and the other on Immediacy. We test them specifically from several degrees.
+- open discussion: during this project, we find several anti-intuitive findings. We try to understand them by combining with cultural backgroud, political events, and etc.
 
-app = SocialDSFufu
+# Repo Structure
 
-Data collection is from Feb,09, 2020
+The structure of this Git repo:
 
-For language="en" data, only collect half day, from 12pm-12am.
+- source codes:
 
-Hashtags used:
+  - 1DataCollection.Rmd/1DataCollection_rate_limit.Rmd: how we collect the data from Twitter API. These two versions have tiny difference on rate limitation checking.
 
-| languages | date1                                                        | date2                                                        |
-| --------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| hi        | 02-09 to 02-29<br />#COVID2019 OR #coronavirus OR #कोरो      | 03-01 to<br />#COVID2019 OR #coronavirus OR #COVID_19 OR #corona OR #covid19 OR #कोरो |
-| ja        | 02-09 to 02-29<br />#COVID2019 OR #coronavirus OR #コロナウイルス | 03-01 to <br />#COVID2019 OR #coronavirus OR #COVID_19 OR #corona OR #covid19 OR #コロナウイルス |
-| ko        | 02-09 to 02-29<br />#COVID2019 OR #coronavirus OR #코로나    | 03-01 to <br />#COVID2019 OR #coronavirus OR #COVID_19 OR #corona OR #covid19 OR #코로나 |
-| ru        | 02-09 to 02-29<br />#COVID2019 OR #coronavirus OR #коронавирус | 03-01 to <br />#COVID2019 OR #coronavirus OR #COVID_19 OR #corona OR #covid19 OR #коронавирус |
-| de        | 02-09 to 02-29<br />#COVID2019 OR #coronavirus               | 03-01 to <br />#COVID2019 OR #coronavirus OR #COVID_19 OR #corona |
-| it        | 02-09 to 02-29<br />#COVID2019 OR #coronavirus               | 03-01 to <br />#COVID2019 OR #coronavirus OR #COVID_19 OR #corona |
-| en        | 02-09 to 02-26<br />#COVID2019 OR #coronavirus               | 03-01 to <br />#COVID2019 OR #coronavirus OR #COVID_19 OR #corona |
+  - 2DataView.Rmd: A general view of what kind of data we have.
 
+  - 3DataCheck.Rmd: check the correctness of the data we collect and solve possible problems.
 
+  - 3SourceDefinition.Rmd: define all features we need for the "source" objects.
 
-## Records
+  - 3TargetDefinition.Rmd: same functions for "target" objects.
 
-- hi:#कोरोन
-  - Feb-09 1226285334578647040 (02-08 23:23:01) 1226295037710884864	(02-09 00:01:35)
-  - Feb-10 1226651410281816064 (02-09 23:37:40) >=...
-  - Feb-11 1227019372390178818 (02-10 23:59:49) >=...
-  - Feb-12 1227379013082943488 (02-11 23:48:54) >=...
-  - Feb-13 1227734645166485504 (02-12 )
-  - Feb-14 1228105796581380096
-  - Feb-15 1228447931113492481
-  - Feb-16 1228826047367434241
-  - Feb-17 1229188468011487232
-  - Feb-18 1229555029654278144
-  - Feb-19 1229913233806385152
-  - Feb-20 1230280392248184833
-  - Feb-21 1230638370864451585
-  - Feb-22 1231003399300304897
-  - Feb-23 1231364113617453061
-  - Feb-24 1231722944319172609
-  - Feb-25 1232066843608834049
-  - Feb-26 1232436628724994048
-  - Feb-27 1232816300700917760
-  - Feb-28 1233179448704290817
-  - Feb-29 1233541459086757888
-  
-- ko: #코로나
-  - Feb-09 1226182331385307138 (02-08 16:33:43) >=...
-  - Feb-10 1226651539764170753 (02-09 23:38:11) >=...	
-  - Feb-11 1227013464394043392 (02-10 23:36:21) >=...
-  - Feb-12 1227379459130396674 (02-11 23:50:41) >=...
-  - Feb-13 1227744023135154176
-  - Feb-14 1228105509921624064
-  - Feb-15 1228467279316209664
-  - Feb-16 1228822692561739776
-  - Feb-17 1229191221920141312
-  - Feb-18 1229553182583353344
-  - Feb-19 1229915429226700800
-  - Feb-20 1230279697281376257
-  - Feb-21 1230641746796666880
-  - Feb-22 1231005632716689408
-  - Feb-23 1231367458771980289
-  - Feb-24 1231730072295358464
-  - Feb-25 1232092599529246720
-  - Feb-26 1232455178244083712
-  - Feb-27 1232817029263941634
-  - Feb-28 1233179639863865344
-  - Feb-29 1233542368542019584
-  
-- ru: #коронавирус
-  - Feb-09 1226294506783375361 (02-08 23:59:28) 1226295045755670529 (02-09 00:01:37)   
-  - Feb-10 1226656614301736960 (02-09 23:58:21) >=1226657075905716224 (02-10 00:00:11)
-  - Feb-11 1227019031619756032 (02-10 23:58:28) >=...
-  - Feb-12 1227376820447739909 (02-11 23:40:12) >=...
-  - Feb-13 1227742201830084609
-  - Feb-14 1228106482287120384
-  - Feb-15 1228467935716544515
-  - Feb-16 1228831181568958465
-  - Feb-17 1229192981317595136
-  - Feb-18 1229555021882232832
-  - Feb-19 1229917113097150465
-  - Feb-20 1230277998659526656
-  - Feb-21 1230641630740271104
-  - Feb-22 1231004674393858048
-  - Feb-23 1231366968973889543
-  - Feb-24 1231730001613148166
-  - Feb-25 1232092053644992512
-  - Feb-26 1232454012382801920
-  - Feb-27 1232817488775217152
-  - Feb-28 1233179116855332864
-  - Feb-29 1233541440581623820
-  
-- ja: #コロナウイルス
-  - Feb-09 1226294634915061761 (02-08 23:59:59) 1226294642468999168 (02-09 00:00:00)
-  - Feb-10 1226657019827851265 (02-09 23:59:58) 1226657075905716224 (02-10 00:00:11)
-  - Feb-11 1227019356388782081 (02-10 23:59:46) 1227019491013316610 (02-11 00:00:18)
-  - Feb-12 1227381702873374720 (02-11 23:59:36) 1227381802626535425 (02-12 00:00:00)
-  - Feb-13 1227744058530885632 (02-12 23:59:28) 1227744197962321920 (02-13 00:00:01)
-  - Feb-14 1228106573324488704
-  - Feb-15 1228468932073287680
-  - Feb-16 1228831311596421121
-  - Feb-17 1229193721444360192
-  - Feb-18 1229556061750775808
-  - Feb-19 1229918461444284416
-  - Feb-20 1230280895229091840
-  - Feb-21 1230643232360390658
-  - Feb-22 1231005659925139456
-  - Feb-23 1231367978370748421
-  - Feb-24 1231730453821837312
-  - Feb-25 1232092840500461568
-  - Feb-26 1232455220992462848
-  - Feb-27 1232817604118474752
-  - Feb-28 1233180005401645058
-  - Feb-29 1233542395540754432
+  - 4Strength_Google.Rmd: do the strength hypothesis testing on Google targets.
 
-- de: (same)
-  - Feb-09 1226294623750041600 (02-08 23:59:56) 1226295037710884864	(02-09 00:01:35)
-  - Feb-10 1226656904002330625 (02-09 23:59:30) >=1226657075905716224 (02-10 00:00:11)
-  - Feb-11 1227019171675938817 (02-10 23:59:02) >=...
-  - Feb-12 1227381336891121676 (02-11 23:58:09) >=...
-  - Feb-13 1227743720939966464 (02-12 23:58:08) >=...
-  - Feb-14 1228106431875796992
-  - Feb-15 1228468582419456001
-  - Feb-16 1228831307226124289
-  - Feb-17 1229193542981029888
-  - Feb-18 1229555685622415360
-  - Feb-19 1229918220108218368
-  - Feb-20 1230280294009376769
-  - Feb-21 1230643003842273285
-  - Feb-22 1231005557911363584
-  - Feb-23 1231368056515047424
-  - Feb-24 1231730443684384768
-  - Feb-25 1232092800302428161
-  - Feb-26 1232455219155390465
-  - Feb-27 1232817581989531648
-  - Feb-28 1233179939970658305
-  - Feb-29 1233542394093719552
+  - 4Strength_twitter.Rmd: do the strength hypothesis testing on Twitter targets.
 
-- it: (same)
-  - Feb-09 1226294584986218497 (02-08 23:59:47) 1226294643702280192 (02-09 00:00:01)
-  - Feb-10 1226656902744023040 (02-09 23:59:30) >=1226657075905716224 (02-10 00:00:11)
-  - Feb-11 1227019400286539777 (02-10 23:59:56) 1227019416459628545 (02-11 00:00:00)
-  - Feb-12 1227381712646217728 (02-11 23:59:38) >=...
-  - Feb-13 1227743994421096450 (02-12 23:59:13) >=...
-  - Feb-14 1228106135070269446
-  - Feb-15 1228468857385385984
-  - Feb-16 1228831345528463361
-  - Feb-17 1229193594365513728
-  - Feb-18 1229556129128239107
-  - Feb-19 1229918051556057089
-  - Feb-20 1230280792338837504
-  - Feb-21 1230643282885120000
-  - Feb-22 1231005675674898432
-  - Feb-23 1231368058448547840
-  - Feb-24 1231730416375205889
-  - Feb-25 1232092843147177984
-  - Feb-26 1232455230651912192
-  - Feb-27 1232817608002588673
-  - Feb-28 1233179982408667138
-  - Feb-29 1233542374464401410
-  
+  - 4XGboost.Rmd: try to understand targets' characteristics by feature selection.
 
+  - 5Strength-Hypothesis.Rmd: the whole procedure of strength hypothesis testing on all of the features set.
 
-- en
+- lib/utils.R: a script to save all of the self-defined functions used in multiple files.
+- data/
+  - Nodes/: all the features for the region-version of source/target definitions
+  - Google/: the data we get from GoogleTrend API
+  - 0421TweetsStatistics.csv: the processed Twitter impact data.
+  - 0423covid19_confirmed.csv, 0423covid19_death.csv, 0423covid19_recover.csv: raw COVID19 statistics collected from the John Hopkins University's Git repo.
+  - countries_location.xlsx: the latitude/longitude information of internationally administrative countries/regions.
+  - world_population.json: countries' population statistics.
+- raw.zip: all of the tweets data we collected.
+  - en/
+  - de/
+  - hi/
+  - it/
+  - ru/
+  - ko/
+  - ja/
+  - new/:
+    - de/
+    - hi/
+    - it/
+    - ru/
+    - ko/
+    - ja/
 
-  - Feb-09 1226294634915061761 (02-08 23:59:59) 1226294642468999168 (02-09 00:00:00)
-  - Feb-10 1226657019827851265 (02-09 23:59:58) 1226657075905716224 (02-10 00:00:11)
-  - Feb-11 1227019400286539777 (02-10 23:59:56) 1227019416459628545 (02-11 00:00:00)
-  - Feb-12 1227381712646217728 (02-11 23:59:38) 1227381802626535425 (02-12 00:00:00)
-  - Feb-13 1227744058530885632 (02-12 23:59:28)
-  - Feb-14 1228106573324488704 (02-13 23:59:58)
-  - Feb-15 1228468932073287680 (02-14 23:59:51)
-  - Feb-16 1228831345528463361 (02-15 23:59:58)
-  - Feb-17 1229193721444360192
-  - Feb-18 1229556129128239107
-  - Feb-19 1229918461444284416
-  - Feb-20 1230280895229091840
-  - Feb-21 1230643282885120000
-  - Feb-22 1231005675674898432
-  - Feb-23 1231368058448547840
-  - Feb-24 1231730453821837312
-  - Feb-25 1232092843147177984
-  - Feb-26 1232455230651912192
-  - Feb-27 1232817608002588673
-  - Feb-28 1233180005401645058
-  - Feb-29 1233542374464401410
-
-
-
-
-
-## TO-DO
-
-- [ ] catch "en" data on 02-27,02-28,02-29 use old hashtags, catch "en" data from 03-01 using new hashtags
-
-- [ ] rewrite crabbingData function, to automatically solve the time bug.
-- [ ] proof the data about time.
-  - [x] hi (checked:0209-0229)
-  - [x] ja (checked: 0209-0229)
-    - 3.3: reorder 0209ja by created_at
-    - 3.3: remove the first item in 0210
-    - 3.3: problem: 02-13: only starts from 10:22:59, not 00:00:00
-    - 3.3: remove the first 199 items in 0214, which were on the date 0213.
-    - 3.3: problem: 02-15: only starts from 12:37:12, not 00:00:00
-    - 3.3: remove the first 2902 items in 0216, which were on the date 0215.
-    - 3.3: problem: 02-18: only starts from 12:30:07, not 00:00:00
-    - 3.3: problem: 02-20: only starts from 09:10:31, not 00:00:00
-    - 3.3: problem: 02-21: only starts from 03:37:34, not 00:00:00
-    - 3.3: problem: 02-22: only starts from 09:31:49, not 00:00:00 (Fixed)
-    - 3.3: remove the first 1100 items in 0223, which were on the date 0222.
-    - 3.3: problem: 02-26: only starts from 10:56:59, not 00:00:00. (Fixed)
-    - 3.3: problem: 02-27: only starts from 10:58:10, not 00:00:00. (Fixed)
-  - [x] de (checked: 0209-0229)
-    - 3.3: 0209: reorder
-  - [x] ko (checked: 0209-0229)
-  - [x] ru (checked: 0209-0229)
-  - [x] it  (checked: 0209-0229)
-    - 3.3: problem: 02-12: only starts from 16:08:29, not 00:00:00. 
-  - [x] en
+​    
