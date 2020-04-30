@@ -27,6 +27,10 @@ The structure of this Git repo:
   - 3SourceDefinition.Rmd: define all features we need for the "source" objects.
 
   - 3TargetDefinition.Rmd: same functions for "target" objects.
+  
+  - 4Immediacy_Google.Rmd: do the immediacy hypothesis testing on Google targets.
+  
+  - 4Immediacy_Twiiter.Rmd: do the immediacy hypothesis testing on Twitter targets.
 
   - 4Strength_Google.Rmd: do the strength hypothesis testing on Google targets.
 
