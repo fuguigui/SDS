@@ -38,6 +38,8 @@ The structure of this Git repo:
 
   - 4XGboost.Rmd: try to understand targets' characteristics by feature selection.
 
+  - 5GoogleVSTwitter.Rmd: plot the timeline of Google and Twitter and further explore in differences.
+  
   - 5Strength-Hypothesis.Rmd: the whole procedure of strength hypothesis testing on all of the features set.
 
 - lib/utils.R: a script to save all of the self-defined functions used in multiple files.
@@ -46,7 +48,7 @@ The structure of this Git repo:
   - Google/: the data we get from GoogleTrend API
   - 0421TweetsStatistics.csv: the processed Twitter impact data.
   - 0423covid19_confirmed.csv, 0423covid19_death.csv, 0423covid19_recover.csv: raw COVID19 statistics collected from the John Hopkins University's Git repo.
-  - countries_location.xlsx: the latitude/longitude information of internationally administrative countries/regions.
+  - countries_location.xlsx, countries_location.csv: the latitude/longitude information of internationally administrative countries/regions.
   - world_population.json: countries' population statistics.
 - raw.zip: all of the tweets data we collected. This file is too big to upload to git. You can access it by requiring.
   - en/
