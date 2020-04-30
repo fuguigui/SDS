@@ -1,0 +1,302 @@
+---
+title: "R Notebook"
+author: "Haojun Cai"
+date: "17/4/2020"
+output: html_notebook
+---
+
+**This script is to Test Twitter impacts on the region level**
+
+```{r}
+rm(list=ls())
+```
+
+
+# Calculate distance matrix of geolocation
+
+```{r}
+calGeoDistMatrix <- function(source_nodes,target_nodes,node_geo){
+  geo_dist = c()
+  
+  for (i in 1:length(target_nodes)){
+    target = target_nodes[i]
+    target_dist = c()
+    lat = node_geo[node_geo$Node==target,]$lat
+    long = node_geo[node_geo$Node==target,]$long
+    target_loc = c(long,lat)
+    
+    for (source in source_nodes){
+      lat = node_geo[node_geo$Node==source,]$lat
+      long = node_geo[node_geo$Node==source,]$long
+      source_loc = c(long,lat) 
+      target_dist <- append(target_dist,distm(target_loc,source_loc,fun=distHaversine))
+    }
+    
+   geo_dist <- append(geo_dist,target_dist)
+  }
+  
+  geo_dist_matrix <- matrix(geo_dist, ncol=length(source_nodes), byrow=TRUE)
+  geo_dist <- as.data.frame(geo_dist_matrix, stringsAsFactors=FALSE)
+  
+  colnames(geo_dist) = source_nodes
+  rownames(geo_dist) = target_nodes
+
+  return(geo_dist)
+}
+```
+
+
+# Test the relevance btw immediacy and Twitter impact
+
+## FIRST: Calculate the correlation btw source feature and target impact
+
+```{r}
+calFeatTwitter <- function(test_targets,test_sources,TwitterImpact){
+  cor = c()
+  pval = c()
+  for (target in test_targets){
+    target = tolower(target)
+    
+    for (source in test_sources){
+      dname = paste(source,"_weight",sep="")
+      source_weight = get(dname)
+
+      sumry = cor.test(source_weight,TwitterImpact[,target])
+      pvalue = sumry$p.value
+      targetcor= sumry$estimate
+      
+      cor = append(cor,targetcor)
+      pval = append(pval,pvalue)
+      # plot(source_weight, TwitterImpact$de, xlab="Features", ylab="Impacts")
+    }
+  }
+  
+  cor_matrix <- matrix(cor, ncol=length(test_sources), byrow=TRUE)
+  correlation <- as.data.frame(cor_matrix, stringsAsFactors=FALSE)
+  colnames(correlation) = test_sources
+  rownames(correlation) = test_targets
+  
+  pval_matrix <- matrix(pval, ncol=length(test_sources), byrow=TRUE)
+  pvalue <- as.data.frame(pval_matrix, stringsAsFactors=FALSE)
+  colnames(pvalue) = test_sources
+  rownames(pvalue) = test_targets
+  
+  return(list("cor"=correlation,"pval"=pvalue))
+}
+```
+
+
+## FIRST: Calculate coorelation between distance and above source-target-coorelations
+
+**Alternative 1: Geographical distance**
+
+```{r}
+calcorCorGeodist <- function(test_targets,correlation,geo_dist){
+  
+  TargetDistCor = c()
+  pval = c()
+  
+  for (target in test_targets){
+    targetcor = correlation[c(target),]
+    targetdist = sort(geo_dist[c(target),])
+    sortcolnames <- colnames(targetdist)
+    targetcor <- targetcor[,sortcolnames] # Sort the coorelation based on descending distance
+    targetcor <- t(targetcor)
+    targetdist <- t(targetdist)
+  
+    sumry = cor.test(targetcor,targetdist)
+    pvalue = sumry$p.value
+    cor= sumry$estimate
+    
+    TargetDistCor = append(TargetDistCor,cor)
+    pval = append(pval,pvalue)
+  }
+  
+  TargetDistCor_matrix <- matrix(TargetDistCor, ncol=length(target_nodes), byrow=TRUE)
+  TargetDistCor <- as.data.frame(TargetDistCor_matrix, stringsAsFactors=FALSE)
+  colnames(TargetDistCor) = target_nodes
+  
+  pval_matrix <- matrix(pval, ncol=length(target_nodes), byrow=TRUE)
+  pvalue <- as.data.frame(pval_matrix, stringsAsFactors=FALSE)
+  colnames(pvalue) = target_nodes
+  
+  return(list("cor"=TargetDistCor,"pval"=pvalue))
+  
+}  
+```
+
+
+**Alternative 2: Shorteset path**
+
+```{r}
+calcorCorPath <- function(test_targets,correlation,short_paths){
+
+  pathDist <- short_paths[,c(source_nodes)]
+  rownames(pathDist) = short_paths[,c("X")]
+  pathDist = pathDist[c(target_nodes),]
+  
+  geo_dist = pathDist
+  TargetDistCor = c()
+  pval = c()
+  
+  for (target in test_targets){
+    targetcor = correlation[c(target),]
+    targetdist = sort(geo_dist[c(target),])
+    sortcolnames <- colnames(targetdist)
+    targetcor <- targetcor[,sortcolnames] # Sort the coorelation based on descending distance
+    targetcor <- t(targetcor)
+    targetdist <- t(targetdist)
+
+    sumry = cor.test(targetcor,targetdist)
+    pvalue = sumry$p.value
+    cor= sumry$estimate
+    
+    TargetDistCor = append(TargetDistCor,cor)
+    pval = append(pval,pvalue)
+  }
+
+  TargetDistCor_matrix <- matrix(TargetDistCor, ncol=length(target_nodes), byrow=TRUE)
+  TargetDistCor <- as.data.frame(TargetDistCor_matrix, stringsAsFactors=FALSE)
+  colnames(TargetDistCor) = target_nodes
+  
+  pval_matrix <- matrix(pval, ncol=length(target_nodes), byrow=TRUE)
+  pvalue <- as.data.frame(pval_matrix, stringsAsFactors=FALSE)
+  colnames(pvalue) = target_nodes
+  
+  return(list("cor"=TargetDistCor,"pval"=pvalue))
+}
+
+```
+
+
+# Deal with data within 02.09 - 04.20 (features, impacts)
+
+# Define sources and targets
+
+```{r}
+source_nodes = c("Eu1","Eu2","Eu3","Eu4","Eu5","Eu6","Eu7","Au","As1","As2","As3","As4","As5","Am1","Am2","Am3","Af1","Af2")
+target_nodes = c("Hi","Ko","Ru","Ja","De","It")
+```
+
+
+# Read Twitter impacts
+
+```{r}
+TwitterImpact <- read.csv("./Data/0421TweetsStatistics.csv")
+TwitterImpact <- TwitterImpact[1:72,] # CHOOSE TIME DURATION IN 02.09-04.20
+```
+
+
+# Read immediacy data
+```{r}
+short_paths <- read.csv("./Data/Nodes/shortest_path.csv")
+node_geo <- read.csv("./Data/Nodes/node_geo.csv")
+member <- read.csv("./Data/Nodes/node_member.csv")
+geo_dist <- calGeoDistMatrix(source_nodes,target_nodes,node_geo)
+```
+
+
+# Read source features
+
+```{r}
+# Change test_srouce and test_targets to test different variables
+test_targets = target_nodes
+test_sources = source_nodes
+
+# Read source features
+feat_chosen_dates = c(19:90) # CHOOSE TIME DURATION IN 02.09 - 04.20
+
+# Read source features
+for (source in test_sources){
+  varname = paste(source,"_source_feat",sep="")
+  source_feat = read.csv(paste("./Data/Nodes/features/",source,".csv",sep=""))
+  source_feat = source_feat[feat_chosen_dates,] 
+  assign(varname,source_feat)
+}
+```
+
+
+# Calculate coorelation between chosen source feature/source weight and impacts
+
+TEST 1: Confirm, Twitter impacts
+**First step: calculate correlation btw source feature and target impacts**
+
+```{r}
+# Calculate weighted source features
+for (source in test_sources){
+  dname = paste(source,"_source_feat",sep="")
+  varname = paste(source,"_weight",sep="")
+  source_feat = get(dname)
+  source_weight = source_feat$confirm
+  assign(varname,source_weight)
+}
+
+sumryFeatTwitter <- calFeatTwitter(test_targets,test_sources,TwitterImpact)
+corFeatTwitter <- sumryFeatTwitter$cor
+pvalFeatTwitter <- sumryFeatTwitter$pval
+print(corFeatTwitter)
+print(pvalFeatTwitter)
+
+```
+
+
+TEST 1 Continued: Confirm, Twitter impacts, Distance
+**Second step: calculate correlation btw disatnce and above correlations**
+
+```{r}
+sumryCorGeodist <- calcorCorGeodist(test_targets,corFeatTwitter,geo_dist)
+corCorGeodist <- sumryCorGeodist$cor
+pvalCorGeodist <- sumryCorGeodist$pval
+print(corCorGeodist)
+print(pvalCorGeodist)
+
+sumryCorPath <- calcorCorPath(test_targets,corFeatTwitter,short_paths)
+corCorPath <- sumryCorPath$cor
+pvalCorPath <- sumryCorPath$pval
+print(corCorPath)
+print(pvalCorPath)
+```
+
+
+TEST 2: **DeathR**, Twitter impacts
+**First step: calculate correlation btw source feature and target impacts**
+
+```{r}
+# Calculate weighted source features
+for (source in test_sources){
+  dname = paste(source,"_source_feat",sep="")
+  varname = paste(source,"_weight",sep="")
+  source_feat = get(dname)
+  source_weight = source_feat$DeathR
+  assign(varname,source_weight)
+}
+
+sumryFeatTwitter <- calFeatTwitter(test_targets,test_sources,TwitterImpact)
+corFeatTwitter <- sumryFeatTwitter$cor
+pvalFeatTwitter <- sumryFeatTwitter$pval
+print(corFeatTwitter)
+print(pvalFeatTwitter)
+```
+
+
+TEST 2 continuted: **DeathR**, Twitter impacts, Distance
+**Second step: calculate correlation btw disatnce and above correlations**
+
+```{r}
+sumryCorGeodist <- calcorCorGeodist(test_targets,corFeatTwitter,geo_dist)
+corCorGeodist <- sumryCorGeodist$cor
+pvalCorGeodist <- sumryCorGeodist$pval
+print(corCorGeodist)
+print(pvalCorGeodist)
+
+sumryCorPath <- calcorCorPath(test_targets,corFeatTwitter,short_paths)
+corCorPath <- sumryCorPath$cor
+pvalCorPath <- sumryCorPath$pval
+print(corCorPath)
+print(pvalCorPath)
+```
+
+
+
+
+
