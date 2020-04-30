@@ -44,7 +44,7 @@ The structure of this Git repo:
   - 0423covid19_confirmed.csv, 0423covid19_death.csv, 0423covid19_recover.csv: raw COVID19 statistics collected from the John Hopkins University's Git repo.
   - countries_location.xlsx: the latitude/longitude information of internationally administrative countries/regions.
   - world_population.json: countries' population statistics.
-- raw.zip: all of the tweets data we collected.
+- raw.zip: all of the tweets data we collected. This file is too big to upload to git. You can access it by requiring.
   - en/
   - de/
   - hi/
@@ -61,3 +61,9 @@ The structure of this Git repo:
     - ja/
 
 ​    
+
+Contact:
+
+Guirong Fu: fug@student.ethz.ch
+
+Haojun Cai: caihao@student.ethz.ch
