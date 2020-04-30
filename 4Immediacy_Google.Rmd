@@ -1,0 +1,248 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+**This script is to Test Google impacts on the country level**
+
+```{r}
+rm(list=ls())
+library(geosphere)
+library(dplyr)
+```
+
+
+# Read Google impacts
+
+```{r}
+# Alternative 1: read the data from pre-saved file
+HiGoogleTrend <- read.csv("./Data/Google/india.csv",header=FALSE)
+KoGoogleTrend <- read.csv("./Data/Google/southkorea.csv",header=FALSE)
+RuGoogleTrend <- read.csv("./Data/Google/russia.csv",header=FALSE)
+JaGoogleTrend <- read.csv("./Data/Google/japan.csv",header=FALSE)
+DeGoogleTrend <- read.csv("./Data/Google/germany.csv",header=FALSE)
+ItGoogleTrend <- read.csv("./Data/Google/italy.csv",header=FALSE)
+
+# CHOOSE TIME DURATION IN 01.22-04.20
+GoogleTrends_chosen_date = c(2:91) 
+
+HiGoogleImpact = HiGoogleTrend[GoogleTrends_chosen_date,]
+KoGoogleImpact = KoGoogleTrend[GoogleTrends_chosen_date,]
+RuGoogleImpact = RuGoogleTrend[GoogleTrends_chosen_date,]
+JaGoogleImpact = JaGoogleTrend[GoogleTrends_chosen_date,]
+DeGoogleImpact = DeGoogleTrend[GoogleTrends_chosen_date,]
+ItGoogleImpact = ItGoogleTrend[GoogleTrends_chosen_date,]
+
+# Alternative 2: obtain real-time Google trends data 
+# keyword = "coronavirus"
+# countries = c("IN","KR","RU","JP","DE","IT") # choose corresponding targets' country code
+# time = "today 3-m"
+# GoogleImpatcs <- calGoogleTrends(keyword,countries,time,target_nodes)
+# HiGoogleImpact <- GoogleImpatcs$HiGoogleTrend
+# KoGoogleImpact <- GoogleImpatcs$KoGoogleTrend
+# RuGoogleImpact <- GoogleImpatcs$RuGoogleTrend
+# JaGoogleImpact <- GoogleImpatcs$JaGoogleTrend
+# DeGoogleImpact <- GoogleImpatcs$DeGoogleTrend
+# ItGoogleImpact <- GoogleImpatcs$ItGoogleTrend
+```
+
+
+# Read immediacy data 
+
+```{r}
+countryLoc <- read.csv("./Data/countries_locations.csv")
+countryLoc$name = as.character(countryLoc$name)
+targetNameLoc = c("India","South Korea","Russia","Japan","Germany","Italy")
+targetLoc <- countryLoc[countryLoc$name %in% targetNameLoc,]
+sourceLoc <- countryLoc[!(countryLoc$name %in% targetLoc$name),]
+
+geo_dist = c()
+
+for (i in 1:nrow(targetLoc)){
+  target_dist = c()
+  long = targetLoc[i,]$longitude
+  lat = targetLoc[i,]$latitude
+  target_loc = c(long,lat)
+  
+  for (i in 1:nrow(countryLoc)){
+    long = countryLoc[i,]$longitude
+    lat = countryLoc[i,]$latitude
+    source_loc = c(long,lat) 
+    target_dist <- append(target_dist,distm(target_loc,source_loc,fun=distHaversine))
+  }
+  
+  geo_dist <- append(geo_dist,target_dist)
+}
+
+geo_dist_matrix <- matrix(geo_dist, ncol=nrow(countryLoc), byrow=TRUE)
+geo_dist <- as.data.frame(geo_dist_matrix, stringsAsFactors=FALSE)
+
+rownames(geo_dist) = targetLoc$name
+colnames(geo_dist) = countryLoc$name
+```
+
+
+# Process feature data
+
+```{r}
+# Deal with confirm data
+confirm <- read.csv("./Data/0423covid19_confirmed.csv")
+allColNames = colnames(confirm)
+remColNames = c("Province.State","Country.Region","Lat","Long")
+chosenCol <- allColNames[!allColNames %in% remColNames]
+
+# Summarise confirmed cases by country
+confirm %>%
+  group_by(Country.Region) %>%
+    summarise_at(chosenCol,sum) -> confirmByCountry
+confirmByCountry$Country.Region = as.character(confirmByCountry$Country.Region)
+
+# Repeat for death data
+death <- read.csv("./Data/0423covid19_deaths.csv")
+allColNames = colnames(death)
+remColNames = c("Province.State","Country.Region","Lat","Long")
+chosenCol <- allColNames[!allColNames %in% remColNames]
+
+# Summarise death cases by country
+death %>%
+  group_by(Country.Region) %>%
+    summarise_at(chosenCol,sum) -> deathByCountry
+deathByCountry$Country.Region = as.character(deathByCountry$Country.Region)
+
+```
+
+
+# Test the relevance btw immediacy and Google impact
+
+**FIRST: Calculate the correlation btw source feature and target impact**
+**Switch between Confirm and DeathR manully in thie section**
+
+```{r}
+target_nodes = c("Hi","Ko","Ru","Ja","De","It")
+feat_chosen_dates = c(2:91)
+
+flag = targetNameLoc %in% confirmByCountry$Country.Region # By testing, we found South Korea is named differently in confirm datasets by 'Korea, South'
+
+cor = c()
+pval = c()
+sourceNames = c()
+
+for (i in 1:length(target_nodes)){
+  dname = paste(target_nodes[i],"GoogleImpact",sep="")
+  impact = get(dname)
+  
+  for (j in 1:nrow(countryLoc)){
+    countryName = countryLoc[j,]$name
+    if(countryName=="South Korea") {countryName="Korea, South"}
+    
+    if (countryName %in% confirmByCountry$Country.Region) {
+      sourceNames = append(sourceNames,countryName)
+      confirmSource = confirmByCountry[confirmByCountry$Country.Region==countryName,feat_chosen_dates]
+      
+      ## Switch BEGIN
+      
+      ### For Confirm Feature
+      # sourceFeat = as.numeric(confirmSource[1,])
+      # sumry = cor.test(sourceFeat,impact[,2])
+      # targetcor = sumry$estimate
+      # pvalue = sumry$p.value
+      # cor = append(cor,targetcor)
+      # pval = append(pval,pvalue)
+
+      ### For DearthR Feature
+      deathSource = deathByCountry[deathByCountry$Country.Region==countryName,feat_chosen_dates]
+      deathRSource = deathSource/confirmSource
+      deathRSource[is.na(deathRSource)] = 0
+      sourceFeat =  as.numeric(deathRSource[1,])
+      if(sd(deathRSource)!=0){
+        sumry = cor.test(sourceFeat,impact[,2])
+        targetcor = sumry$estimate
+        pvalue = sumry$p.value
+      
+       cor = append(cor,targetcor)
+        pval = append(pval,pvalue)
+      }
+      else{
+        cor = append(cor,0)
+        pval = append(pval,0)
+      }
+    
+      ## Switch END
+      
+    }
+  }
+}
+
+sourceNames[sourceNames=="Korea, South"] = "South Korea"
+
+cor_matrix <- matrix(cor, ncol=length(cor)/length(target_nodes), byrow=TRUE)
+correlation <- as.data.frame(cor_matrix, stringsAsFactors=FALSE)
+colnames(correlation) = sourceNames[1:ncol(correlation)]
+rownames(correlation) = target_nodes
+
+pval_matrix <- matrix(pval, ncol=length(cor)/length(target_nodes), byrow=TRUE)
+pvalue <- as.data.frame(pval_matrix, stringsAsFactors=FALSE)
+colnames(pvalue) = sourceNames[1:ncol(correlation)]
+rownames(pvalue) = target_nodes
+  
+```
+
+
+**Second step: calculate correlation btw disatnce and above correlations**
+
+```{r}
+geo_dist = geo_dist[,colnames(correlation)]
+targetNameLoc = c("India","South Korea","Russia","Japan","Germany","Italy")
+targetNameLocId = c("Hi","Ko","Ru","Ja","De","It")
+
+corCorDist = c()
+pvalCorDist = c()
+
+for (i in 1:length(targetNameLoc)){
+  
+  chosentargetId = i
+  
+  corTarget = as.data.frame(t(correlation[targetNameLocId[chosentargetId],]))
+  geodistTarget = as.data.frame(t(geo_dist[targetNameLoc[chosentargetId],]))
+  geoRowNames = rownames(geodistTarget)
+  
+  sumry = cor.test(geodistTarget[,1],corTarget[,1])
+  corCorDist = append(corCorDist,sumry$estimate)
+  pvalCorDist = append(pvalCorDist,sumry$p.value)
+}
+
+corCorDistt_matrix <- matrix(corCorDist, ncol=6, byrow=TRUE)
+corCorDist <- as.data.frame(corCorDistt_matrix, stringsAsFactors=FALSE)
+colnames(corCorDist) = targetNameLocId
+
+pvalCorDist_matrix <- matrix(pvalCorDist, ncol=6, byrow=TRUE)
+pvalCorDist <- as.data.frame(pvalCorDist_matrix, stringsAsFactors=FALSE)
+colnames(pvalCorDist) = targetNameLocId
+
+print(corCorDist)
+print(pvalCorDist)
+
+```
+
+
+# Further exploration
+
+**Plot the distance interval wrt coorelation from the first step**
+
+```{r}
+# png("./pic/DeathRGoogleCorDist/It_GoogleCorDist.png",height=350,width=700)
+
+targetNameLoc = c("India","South Korea","Russia","Japan","Germany","Italy")
+targetNameLocId = c("Hi","Ko","Ru","Ja","De","It")
+chosentargetId = 5
+
+corTarget = as.data.frame(t(correlation[targetNameLocId[chosentargetId],]))
+geodistTarget = as.data.frame(t(geo_dist[targetNameLoc[chosentargetId],]))
+
+title = paste(targetNameLoc[chosentargetId],"'s Correlation wrt Sources at Chosen Geo-distance Threshold",sep="")
+plot(geodistTarget[,1],corTarget[,1],main=title,ylim=c(0,1),ylab="Correlation",xlab="Distance (m)",col="gray73")
+
+# dev.off()
+```
+
+
