@@ -11,11 +11,11 @@ output: html_document
 #rm(list=ls())
 library(dplyr)
 library(rtweet,lib.loc="./lib/") # you can change to your lib location
-api_key <- "VWWcdtFA3fLW92nBryikpgR8B"
-api_secret_key <- "77E6tRxJb6wafNe5fJw3iRkelnkEPurkyVqALAb2La9SqAOs07"
+api_key <- ""
+api_secret_key <- ""
 
-access_token <- "790192685256613888-lxUV5nhjYhijjBpFDO3gBcTAaSVxT2Q"
-access_token_secret <- "EXuLZZjl8mqX7VBQP4yK3QbXXAGDUZID7SMbPgdBjA15F"
+access_token <- ""
+access_token_secret <- ""
 
 ## authenticate via web browser
 token <- create_token(
