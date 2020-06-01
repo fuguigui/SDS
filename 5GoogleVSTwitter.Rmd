@@ -138,11 +138,11 @@ library(rtweet)
 
 
 ```{r}
-api_key <- "wGviTlE2AfSxux4NkHrf3BNmm"
-api_secret_key <- "ERF3xbetPMgAu0DNoSzJdBr6fwRAtuIBqU8SJq107bMytivsBG"
+api_key <- ""
+api_secret_key <- ""
 
 token <- create_token(
-  app = "HaojunApp",
+  app = "",
   consumer_key = api_key,
   consumer_secret = api_secret_key)
 ```
