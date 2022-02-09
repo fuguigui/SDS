@@ -12,7 +12,7 @@ Our work mainly consists of:
 - hypothesis testing: we set two hypothesis, one on Strength and the other on Immediacy. We test them specifically from several degrees.
 - open discussion: during this project, we find several anti-intuitive findings. We try to understand them by combining with cultural backgroud, political events, and etc.
 
-If you are interested, details can be found in the report https://drive.google.com/file/d/1dz7g_hZ8knVdyOUkxFKHEsXJm4BK1oTY/view?usp=sharing
+If you are interested, details can be found in the [report](https://drive.google.com/file/d/1dz7g_hZ8knVdyOUkxFKHEsXJm4BK1oTY/view?usp=sharing)
 
 # Repo Structure
 
